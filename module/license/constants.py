@@ -12,8 +12,8 @@ import base64
 import os
 
 # 占位值，发布前替换。
-LICENSE_SERVER = "https://license.example.com"
-LICENSE_PUBLIC_KEY_B64 = ""
+LICENSE_SERVER = "https://oas-license.duckdns.org"
+LICENSE_PUBLIC_KEY_B64 = "64GiJWL15TKWO_y9q6JpGrG1IHRIyFNkTYILZDjydGQ"
 
 # 授权令牌与离线宽限。
 TOKEN_TTL_SECONDS = 7 * 86400

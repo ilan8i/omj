@@ -17,11 +17,14 @@ from module.license.errors import (
     NETWORK_ERROR,
     RATE_LIMITED,
     SERVER_ERROR,
+    TOKEN_EXPIRED,
+    TOKEN_INVALID,
     LicenseError,
 )
 
 _ERROR_BY_STATUS = {
     400: INVALID_KEY,
+    401: TOKEN_EXPIRED,
     403: LICENSE_REVOKED,
     409: MACHINE_MISMATCH,
     410: LICENSE_EXPIRED,
@@ -61,6 +64,8 @@ def _post(server: str, path: str, payload: dict) -> dict:
         LICENSE_EXPIRED,
         RATE_LIMITED,
         SERVER_ERROR,
+        TOKEN_EXPIRED,
+        TOKEN_INVALID,
     }:
         code = str(body["code"])
 

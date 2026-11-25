@@ -7,6 +7,7 @@ from module.license import service as service_mod
 from module.license.errors import (
     LICENSE_REVOKED,
     NETWORK_ERROR,
+    TOKEN_EXPIRED,
     LicenseError,
 )
 from module.license.state import LicenseState
@@ -152,6 +153,28 @@ def test_clock_rollback(svc):
     license_service._last_server_time = now + 3600
     status = license_service.refresh_local()
     assert status.state == LicenseState.CLOCK_ROLLBACK
+
+
+def test_heartbeat_token_expired_reactivates(svc, monkeypatch):
+    license_service, state = svc
+    now = int(time.time())
+    calls = {"activate": 0}
+
+    def _activate(*args, **kwargs):
+        calls["activate"] += 1
+        return _response(now)
+
+    monkeypatch.setattr(service_mod.client, "activate", _activate)
+    license_service.activate("OAS-KEY")
+    assert calls["activate"] == 1
+
+    def _expired(*args, **kwargs):
+        raise LicenseError(TOKEN_EXPIRED, "expired", server_denied=True)
+
+    monkeypatch.setattr(service_mod.client, "heartbeat", _expired)
+    status = license_service.heartbeat()
+    assert calls["activate"] == 2
+    assert status.state == LicenseState.ACTIVE
 
 
 def test_deactivate_clears_permissions(svc, monkeypatch):

@@ -17,6 +17,8 @@ from module.license.errors import (
     MACHINE_MISMATCH,
     MACHINE_UNAVAILABLE,
     SERVER_ERROR,
+    TOKEN_EXPIRED,
+    TOKEN_INVALID,
     LicenseError,
 )
 from module.license.machine import get_machine_code
@@ -299,6 +301,26 @@ class LicenseService:
                 constants.get_app_version(),
             )
         except LicenseError as exc:
+            # 令牌过期/无效时，用本地保存的密钥重新激活。
+            if exc.code in (TOKEN_EXPIRED, TOKEN_INVALID) and key:
+                try:
+                    return self.activate(key)
+                except Exception as activate_exc:
+                    with self._lock:
+                        state = (
+                            LicenseState.EXPIRED
+                            if getattr(activate_exc, "server_denied", False)
+                            else LicenseState.SERVER_ERROR
+                        )
+                        self._set_status(
+                            state,
+                            getattr(
+                                activate_exc,
+                                "message",
+                                activate_exc.__class__.__name__,
+                            ),
+                        )
+                        return self._snapshot()
             with self._lock:
                 if exc.server_denied:
                     state = (
