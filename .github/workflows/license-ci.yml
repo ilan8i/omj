@@ -1,0 +1,31 @@
+name: license-ci
+
+on:
+  push:
+    branches: [license, myself]
+  pull_request:
+    branches: [license, myself]
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      # 只安装授权模块测试所需的最小依赖。
+      # test_license_router.py 依赖完整的 OAS 运行环境，建议在本地完整环境执行。
+      - name: Install test dependencies
+        run: pip install cryptography requests pytest rich
+
+      - name: Compile license modules
+        shell: bash
+        run: |
+          python -m py_compile module/license/*.py module/server/license_router.py
+
+      - name: Run license unit tests
+        run: |
+          pytest -q tests/test_license_machine.py tests/test_license_token.py tests/test_license_cache.py tests/test_license_service.py

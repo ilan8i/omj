@@ -4,6 +4,7 @@
 from contextlib import asynccontextmanager
 
 import argparse
+import asyncio
 from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from module.logger import logger
 from module.server.api_logger import ensure_api_logger
 from module.server.home_router import home_app
+from module.server.license_router import license_app
 from module.server.log_router import log_app
 from module.server.script_router import script_app
 from module.server.stats_router import stats_app
@@ -20,6 +22,7 @@ from starlette import status
 from starlette.responses import JSONResponse
 from module.server.setting import State
 from module.server.main_manager import mm
+from module.license import license_service
 
 
 
@@ -45,6 +48,7 @@ app.add_middleware(
 )
 
 app.include_router(home_app)
+app.include_router(license_app)
 app.include_router(script_app)
 app.include_router(stats_app)
 app.include_router(log_app)
@@ -61,12 +65,22 @@ async def on_startup():
     :return:
     """
     ensure_api_logger()
+    license_service.on_revoked = mm.stop_all
+    app.state.license_task = asyncio.create_task(license_service.heartbeat_loop())
     logger.info('OAS web service startup done')
     if app.state.script_instances:
         await mm.restart_processes(app.state.script_instances)
 
 
 async def on_shutdown():
+    task = getattr(app.state, 'license_task', None)
+    if task is not None:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+    license_service.stop()
     logger.info('OAS web service shutdown done')
 
 

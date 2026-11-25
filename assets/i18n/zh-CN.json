@@ -352,5 +352,21 @@
   "trigger_all_enabled_tasks": "切号后触发所有已启用任务",
   "trigger_all_enabled_tasks_help": "切号成功后，把当前配置里所有已启用任务的运行时间重置为当前，让它们立即依次执行",
   "current_index": "当前切号指针",
-  "current_index_help": "脚本自动维护的切号进度，无需手动修改"
+  "current_index_help": "脚本自动维护的切号进度，无需手动修改",
+  "license": "授权",
+  "license_key": "授权密钥",
+  "license_key_help": "填写购买或分配的授权密钥；密钥会绑定当前设备",
+  "license_status": "授权状态",
+  "license_state_active": "已授权",
+  "license_state_grace": "离线宽限期",
+  "license_state_expired": "已过期",
+  "license_state_revoked": "已吊销",
+  "license_state_unlicensed": "未激活",
+  "license_remaining_days": "剩余天数",
+  "license_activate": "激活",
+  "license_activate_success": "激活成功",
+  "license_activate_failed": "激活失败",
+  "license_machine_mismatch": "该密钥已绑定其他设备",
+  "license_server_error": "无法连接授权服务器",
+  "license_clock_rollback": "系统时间异常，请校准后重试"
 }

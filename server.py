@@ -27,6 +27,7 @@ import threading
 
 from module.logger import logger
 from module.image.rpc import ensure_image_server_ready, shutdown_image_server
+from module.license import license_service
 from module.server.setting import State
 from module.ocr.rpc import ensure_ocr_server_ready, shutdown_ocr_server
 
@@ -79,6 +80,10 @@ def fun(ev: threading.Event):
     logger.attr("Host", host)
     logger.attr("Port", port)
     logger.attr("Reload", ev is not None)
+
+    # 未授权时仍然启动服务，保证 /license/* 可访问，让前端能提交密钥。
+    license_service.load_from_cache()
+    logger.attr("License", license_service.status_dict().get("state"))
 
     ensure_image_server_ready()
     ensure_ocr_server_ready()
