@@ -27,10 +27,16 @@ LICENSE_KEY_FILE = "config/license.json"
 # 缓存文件魔数。
 CACHE_MAGIC = b"OASL1"
 
+# 发布构建必须保持 False。
+# 本地联调（例如连本地假授权服务）时，在开发分支把它改成 True，
+# 再配合 OAS_LICENSE_DEV=1 使用。不要只靠环境变量开启，否则任何人都能
+# 用 OAS_LICENSE_DEV=1 覆盖服务地址和公钥。
+DEV_MODE = False
+
 
 def is_dev() -> bool:
     """是否处于本地联调模式。"""
-    return os.environ.get("OAS_LICENSE_DEV") == "1"
+    return DEV_MODE and os.environ.get("OAS_LICENSE_DEV") == "1"
 
 
 def get_server_url() -> str:

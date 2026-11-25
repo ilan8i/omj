@@ -104,6 +104,8 @@ def test_deactivate(client):
 
 
 def test_script_start_returns_402(monkeypatch):
+    # 该用例会导入完整 OAS 配置模型，最小环境没有 cv2 时跳过。
+    pytest.importorskip("cv2")
     from module.server import script_router
 
     class FakeMM:
