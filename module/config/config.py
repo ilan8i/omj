@@ -238,20 +238,35 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
         获取调度器的数据， 但是你必须使用update_scheduler来更新信息
         :return:
         """
+        from module.license import license_service
+        from module.license.permissions import required_permission
+
+        def visible(name: str) -> bool:
+            permission = required_permission(name)
+            return not permission or license_service.has_permission(permission)
+
         # 根据调度器更新时间来判断是否有可运行的任务,保证逻辑一致性
         scheduler_update_dt = getattr(self, 'scheduler_update_dt', datetime.now())
         running = {}
-        if self.task is not None and self.task.next_run < scheduler_update_dt:
+        if (
+            self.task is not None
+            and self.task.next_run < scheduler_update_dt
+            and visible(self.task.command)
+        ):
             running = {"name": self.task.command, "next_run": str(self.task.next_run)}
 
         pending = []
         pending_tasks = self.pending_task[1:] if running else self.pending_task
         for p in pending_tasks:
+            if not visible(p.command):
+                continue
             item = {"name": p.command, "next_run": str(p.next_run)}
             pending.append(item)
 
         waiting = []
         for w in self.waiting_task:
+            if not visible(w.command):
+                continue
             item = {"name": w.command, "next_run": str(w.next_run)}
             waiting.append(item)
 

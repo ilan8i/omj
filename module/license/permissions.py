@@ -6,6 +6,8 @@
 
 客户端只做本地校验，不额外发网络请求；权限变更由心跳刷新令牌后生效。
 """
+import inflection
+
 PERMISSION_SWITCH_ACCOUNT = "switch_account"
 PERMISSION_ASSIST_BATTLE = "assist_battle"
 
@@ -24,7 +26,13 @@ TASK_PERMISSIONS = {
 
 def required_permission(task: str) -> str | None:
     """返回任务需要的权限标识；不需要权限时返回 None。"""
-    return TASK_PERMISSIONS.get(str(task or "").strip())
+    value = str(task or "").strip()
+    if not value:
+        return None
+    permission = TASK_PERMISSIONS.get(value)
+    if permission:
+        return permission
+    return TASK_PERMISSIONS.get(inflection.camelize(value))
 
 
 def permission_label(permission: str) -> str:

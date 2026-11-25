@@ -1,28 +1,27 @@
 # This Python file uses the following encoding: utf-8
 """授权模块的固定配置。
 
-发布前必须替换下面的占位值：
-- LICENSE_SERVER: 授权服务地址，生产环境必须使用 HTTPS。
-- LICENSE_PUBLIC_KEY_B64: 服务端 Ed25519 公钥的 raw 32 字节，base64url 无 padding。
+授权服务地址和 Ed25519 公钥随代码一起发布，用户不需要自己创建配置文件。
+用户卡密通过 POST /license/activate 输入；也可以可选地写到
+config/license.json 的 key 字段（该文件已被 .gitignore 忽略）。
 
-生产环境不允许通过配置文件修改上述两项；只有设置 OAS_LICENSE_DEV=1 时，
-才允许通过环境变量覆盖，便于本地联调。
+只有设置 OAS_LICENSE_DEV=1 且 DEV_MODE=True 时，才允许用环境变量覆盖。
 """
 import base64
 import os
 
-# 占位值，发布前替换。
+# 授权服务地址与公钥。
 LICENSE_SERVER = "https://oas-license.duckdns.org"
 LICENSE_PUBLIC_KEY_B64 = "64GiJWL15TKWO_y9q6JpGrG1IHRIyFNkTYILZDjydGQ"
+
+# 可选的本机卡密文件；config/*.json 已被 .gitignore 忽略。
+LICENSE_KEY_FILE = "config/license.json"
 
 # 授权令牌与离线宽限。
 TOKEN_TTL_SECONDS = 7 * 86400
 OFFLINE_GRACE_SECONDS = 7 * 86400
 HEARTBEAT_INTERVAL_SECONDS = 6 * 3600
 CLOCK_ROLLBACK_TOLERANCE_SECONDS = 600
-
-# 可选的本地密钥文件（config/*.json 已被 .gitignore 忽略）。
-LICENSE_KEY_FILE = "config/license.json"
 
 # 缓存文件魔数。
 CACHE_MAGIC = b"OASL1"
@@ -40,7 +39,7 @@ def is_dev() -> bool:
 
 
 def get_server_url() -> str:
-    """返回授权服务地址。生产环境只认代码里的常量。"""
+    """返回授权服务地址。"""
     if is_dev():
         return (os.environ.get("OAS_LICENSE_SERVER") or LICENSE_SERVER).strip()
     return LICENSE_SERVER
@@ -49,7 +48,9 @@ def get_server_url() -> str:
 def get_public_key_b64() -> str:
     """返回 Ed25519 公钥（base64url，无 padding）。"""
     if is_dev():
-        return (os.environ.get("OAS_LICENSE_PUBLIC_KEY") or LICENSE_PUBLIC_KEY_B64).strip()
+        return (
+            os.environ.get("OAS_LICENSE_PUBLIC_KEY") or LICENSE_PUBLIC_KEY_B64
+        ).strip()
     return LICENSE_PUBLIC_KEY_B64
 
 

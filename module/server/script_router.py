@@ -12,6 +12,7 @@ from module.config.utils import convert_to_underscore
 
 from module.logger import logger
 from module.license import license_service
+from module.license.permissions import required_permission
 from module.server.api_logger import ApiLoggingRoute, log_ws_event
 from module.server.config_manager import (
     ConfigAlreadyExistsError,
@@ -29,6 +30,20 @@ from tasks.Component.config_base import TimeDelta
 
 
 script_app = APIRouter(route_class=ApiLoggingRoute)
+
+
+def _ensure_task_permission(task: str) -> None:
+    """无权限任务不返回 schema，也不允许直接改配置。"""
+    permission = required_permission(task)
+    if permission and not license_service.has_permission(permission):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "PERMISSION_DENIED",
+                "message": f"当前授权未开通任务权限: {permission}",
+                "permission": permission,
+            },
+        )
 
 
 @script_app.get('/test')
@@ -267,10 +282,12 @@ async def script_stop(script_name: str):
 
 @script_app.get('/{script_name}/{task}/args')
 async def script_task(script_name: str, task: str):
+    _ensure_task_permission(task)
     return mm.config_cache(script_name).model.script_task(task)
 
 @script_app.put('/{script_name}/{task}/{group}/{argument}/value')
 async def script_set_task_value(script_name: str, task: str, group: str, argument: str, types: str, value):
+    _ensure_task_permission(task)
     try:
         match types:
             case 'integer':

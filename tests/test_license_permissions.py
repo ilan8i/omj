@@ -10,6 +10,8 @@ def test_task_permission_mapping():
     assert required_permission("AccountSwitch") == PERMISSION_SWITCH_ACCOUNT
     assert required_permission("SwitchAccount") == PERMISSION_SWITCH_ACCOUNT
     assert required_permission("AssistBattle") == PERMISSION_ASSIST_BATTLE
+    assert required_permission("account_switch") == PERMISSION_SWITCH_ACCOUNT
+    assert required_permission("assist_battle") == PERMISSION_ASSIST_BATTLE
     assert required_permission("Orochi") is None
     assert required_permission("") is None
     assert required_permission(None) is None

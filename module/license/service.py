@@ -283,6 +283,9 @@ class LicenseService:
 
     def heartbeat(self) -> LicenseStatus:
         with self._lock:
+            if not self._loaded:
+                self._loaded = True
+                self._load_cache_unlocked()
             token = self._token
             key = self._key
 

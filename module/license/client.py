@@ -35,6 +35,8 @@ _SERVER_DENIED_STATUS = {400, 403, 409, 410}
 
 def _post(server: str, path: str, payload: dict) -> dict:
     server = (server or "").strip().rstrip("/")
+    if not server:
+        raise LicenseError(INSECURE_SERVER, "授权服务未配置")
     if not server.startswith("https://") and not constants.is_dev():
         raise LicenseError(INSECURE_SERVER, "授权服务必须使用 HTTPS")
 

@@ -1,7 +1,6 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
-from cached_property import cached_property
 from pydantic import BaseModel, ValidationError, validator, Field
 
 from module.config.utils import *
@@ -45,11 +44,26 @@ class ConfigMenu:
         # 开发工具
         self.menu["Tools"] = ['Image Rule', 'Ocr Rule', 'Click Rule', 'Long Click Rule', 'Swipe Rule', 'List Rule']
 
-    @cached_property
+    @property
     def gui_menu_list(self) -> dict:
-        del self.menu['TaskList']
-        del self.menu['Tools']
-        return self.menu
+        """返回给 OASX 的菜单；无权限的任务不显示。"""
+        from module.license import license_service
+        from module.license.permissions import required_permission
+
+        result: dict[str, list[str]] = {}
+        for group, tasks in self.menu.items():
+            if group in ('TaskList', 'Tools'):
+                continue
+            visible = []
+            for task in tasks:
+                permission = required_permission(task)
+                if permission and not license_service.has_permission(permission):
+                    continue
+                visible.append(task)
+            # 空分组不返回，避免 OASX 显示空标题；Overview/Script 始终保留。
+            if visible or group in ('Overview', 'Script'):
+                result[group] = visible
+        return result
 
 
 if __name__ == "__main__":
