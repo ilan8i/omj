@@ -366,5 +366,9 @@
   "license_activate_failed": "激活失败",
   "license_machine_mismatch": "该密钥已绑定其他设备",
   "license_server_error": "无法连接授权服务器",
-  "license_clock_rollback": "系统时间异常，请校准后重试"
+  "license_clock_rollback": "系统时间异常，请校准后重试",
+  "license_permissions": "任务权限",
+  "license_permission_denied": "当前授权未开通该任务权限",
+  "license_permission_switch_account": "切换账号",
+  "license_permission_assist_battle": "一键协战"
 }

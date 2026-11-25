@@ -50,6 +50,7 @@ def _claims(**overrides):
         "tok_exp": now + 3600,
         "iat": now,
         "jti": "jti-1",
+        "perms": ["switch_account"],
     }
     claims.update(overrides)
     return claims

@@ -24,6 +24,7 @@ def _claims(token_exp: int, license_exp: int) -> dict:
         "lic_exp": license_exp,
         "iat": now - 10,
         "jti": "jti-1",
+        "perms": ["switch_account", "assist_battle"],
     }
 
 
@@ -67,6 +68,10 @@ def test_activate_success(svc, monkeypatch):
     status = license_service.activate("OAS-KEY")
     assert status.state == LicenseState.ACTIVE
     assert status.plan == "month_30d"
+    assert license_service.has_permission("switch_account")
+    assert license_service.has_permission("assist_battle")
+    assert not license_service.has_permission("unknown")
+    assert "switch_account" in status.to_dict()["permissions"]
 
 
 def test_heartbeat_network_error_keeps_active(svc, monkeypatch):
@@ -147,3 +152,17 @@ def test_clock_rollback(svc):
     license_service._last_server_time = now + 3600
     status = license_service.refresh_local()
     assert status.state == LicenseState.CLOCK_ROLLBACK
+
+
+def test_deactivate_clears_permissions(svc, monkeypatch):
+    license_service, state = svc
+    now = int(time.time())
+    monkeypatch.setattr(
+        service_mod.client, "activate", lambda *args, **kwargs: _response(now)
+    )
+    license_service.activate("OAS-KEY")
+    assert license_service.has_permission("switch_account")
+
+    license_service.deactivate()
+    assert not license_service.has_permission("switch_account")
+    assert license_service.status_dict()["state"] == LicenseState.UNLICENSED.value

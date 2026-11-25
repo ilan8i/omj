@@ -14,3 +14,12 @@
 
 授权服务地址与 Ed25519 公钥在 `module/license/constants.py`，发布前必须替换占位值；
 同时确认 `DEV_MODE = False`（发布构建不允许通过环境变量覆盖授权服务与公钥）。
+
+授权令牌的 claims 可以携带 `perms` 数组，例如：
+
+```json
+"perms": ["switch_account", "assist_battle"]
+```
+
+`AccountSwitch`（切换账号）需要 `switch_account`，`AssistBattle`（一键协战）需要
+`assist_battle`。未开通时调度器会跳过该任务，并延后 1 小时重试。

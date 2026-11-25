@@ -1,6 +1,6 @@
 # This Python file uses the following encoding: utf-8
 """授权状态与对外展示结构。"""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import time
 
@@ -23,6 +23,7 @@ class LicenseStatus:
     token_exp: int = 0
     last_ok_at: int = 0
     message: str = ""
+    permissions: list[str] = field(default_factory=list)
 
     @property
     def remaining_seconds(self) -> int:
@@ -45,4 +46,5 @@ class LicenseStatus:
             "remaining_seconds": self.remaining_seconds,
             "last_ok_at": int(self.last_ok_at or 0),
             "message": self.message,
+            "permissions": list(self.permissions),
         }

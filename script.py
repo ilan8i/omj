@@ -32,6 +32,7 @@ from module.server.log_service import build_error_log_dir_name
 from module.license import license_service
 from module.license.errors import LicenseError
 from module.license.machine import get_machine_code
+from module.license.permissions import permission_label, required_permission
 from module.license.token import verify_token
 
 _log_switch_lock = threading.Lock()#线程锁
@@ -368,6 +369,16 @@ class Script:
         :param command:  大写驼峰命名的任务名字
         :return:
         """
+        permission = required_permission(command)
+        if permission:
+            license_service.refresh_local()
+            if not license_service.has_permission(permission):
+                logger.error(
+                    f'Task `{command}` requires permission `{permission}` '
+                    f'({permission_label(permission)}), refuse to run'
+                )
+                return False
+
         if command == 'start' or command == 'goto_main':
             logger.error(f'Invalid command `{command}`')
 
@@ -446,6 +457,17 @@ class Script:
             if not license_service.refresh_local().can_run():
                 logger.error('License expired, stop scheduler')
                 exit(1)
+            permission = required_permission(task)
+            if permission and not license_service.has_permission(permission):
+                logger.error(
+                    f'Task `{task}` requires permission `{permission}` '
+                    f'({permission_label(permission)}), skip and retry later'
+                )
+                self.config.task_delay(
+                    task=task,
+                    target=datetime.now() + timedelta(hours=1),
+                )
+                continue
             self.config.model.running_task = task
             success = self.run(inflection.camelize(task))
             self.config.model.running_task = ''

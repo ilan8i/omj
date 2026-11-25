@@ -38,6 +38,7 @@ class LicenseService:
         self._license_exp = 0
         self._last_server_time = 0
         self._last_ok_at = 0
+        self._permissions: set[str] = set()
         self._loaded = False
         self._revoked_notified = False
         self._stop_event = threading.Event()
@@ -52,6 +53,7 @@ class LicenseService:
             token_exp=self._status.token_exp,
             last_ok_at=self._status.last_ok_at,
             message=self._status.message,
+            permissions=sorted(self._permissions),
         )
 
     def _set_status(self, state: LicenseState, message: str = "") -> None:
@@ -63,6 +65,7 @@ class LicenseService:
             token_exp=self._token_exp,
             last_ok_at=self._last_ok_at,
             message=message,
+            permissions=sorted(self._permissions),
         )
         if old_state != state:
             text = f"License state: {state.value}"
@@ -81,6 +84,16 @@ class LicenseService:
 
     def can_start_new_task(self) -> bool:
         return self.can_run()
+
+    def has_permission(self, permission: str) -> bool:
+        """当前授权是否包含某项任务权限。"""
+        with self._lock:
+            return bool(permission) and permission in self._permissions
+
+    @property
+    def permissions(self) -> list[str]:
+        with self._lock:
+            return sorted(self._permissions)
 
     def status_dict(self) -> dict:
         with self._lock:
@@ -129,6 +142,7 @@ class LicenseService:
     # ------------------------------------------------------------------ state
     def _refresh_from_token(self, allow_grace: bool = True) -> None:
         now = int(time.time())
+        self._permissions = set()
 
         if (
             self._last_server_time
@@ -170,6 +184,14 @@ class LicenseService:
         self._plan = str(claims.get("plan") or "")
         self._token_exp = int(claims.get("tok_exp") or 0)
         self._license_exp = int(claims.get("lic_exp") or 0)
+
+        raw_permissions = claims.get("perms")
+        if isinstance(raw_permissions, (list, tuple, set)):
+            self._permissions = {
+                str(item).strip()
+                for item in raw_permissions
+                if str(item).strip()
+            }
 
         if self._license_exp and now >= self._license_exp:
             self._set_status(LicenseState.EXPIRED, "授权已过期")
@@ -355,6 +377,7 @@ class LicenseService:
             self._license_exp = 0
             self._last_server_time = 0
             self._last_ok_at = 0
+            self._permissions = set()
             self._revoked_notified = False
             cache.clear()
             self._set_status(LicenseState.UNLICENSED, "已清除本地授权")
