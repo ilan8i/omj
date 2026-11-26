@@ -1,7 +1,7 @@
 Deploy:
   Git:
     # 默认更新源（Gitee 镜像）
-    Repository: https://gitee.com/ilan8i/omj.git
+    Repository: https://gitee.com/ialn8i/omj.git
     # 发布分支
     Branch: myself
     # Filepath of git executable `git.exe`

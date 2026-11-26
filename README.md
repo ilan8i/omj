@@ -7,7 +7,7 @@
 ## 国内用户
 
 ```bash
-git clone https://gitee.com/ilan8i/omj.git
+git clone https://gitee.com/ialn8i/omj.git
 ```
 
 Gitee 是 GitHub 的只读镜像，发布分支为 `myself`。
