@@ -24,7 +24,7 @@ Gitee 是 GitHub 的只读镜像，发布分支为 `myself`。
 可选：把卡密写进本机的 `config/license.json`，作为本地备份：
 
 ```json
-{"key": "OAS-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"}
+{"key": "OMJ-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"}
 ```
 
 该文件已被 `.gitignore` 忽略，不会进入仓库。
