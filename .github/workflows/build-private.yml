@@ -1,0 +1,58 @@
+name: build-private
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install build dependencies
+        run: python -m pip install --quiet -r requirements-build.txt
+
+      - name: Compile sensitive modules with Cython
+        run: python dev_tools/cython_build.py
+
+      - name: Package private release
+        run: python dev_tools/package_private.py
+
+      - name: Verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          files = list(Path("dist/private").rglob("*.pyd"))
+          print("pyd count:", len(files))
+          assert len(files) >= 12, files
+          for hidden in (
+              "module/license/service.py",
+              "module/license/token.py",
+              "module/server/license_router.py",
+          ):
+              assert not Path("dist/private", hidden).exists(), hidden
+          assert Path("dist/private/script.py").exists()
+          assert Path("dist/private/server.py").exists()
+          PY
+
+      - name: Upload private package
+        uses: actions/upload-artifact@v4
+        with:
+          name: OAS-private
+          path: dist/OAS-private-*.zip
+          retention-days: 30
