@@ -29,6 +29,9 @@ jobs:
         run: python dev_tools/cython_build.py
 
       - name: Smoke test compiled imports
+        env:
+          PYTHONIOENCODING: utf-8
+          PYTHONUTF8: "1"
         run: |
           python -m pip install --quiet rich requests cryptography fastapi pydantic
           python -c "import module.license.service; import module.server.license_router; print('compiled imports ok')"
