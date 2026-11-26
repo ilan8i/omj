@@ -11,7 +11,7 @@ import base64
 import os
 
 # 授权服务地址与公钥。
-LICENSE_SERVER = "https://oas-license.duckdns.org"
+LICENSE_SERVER = "https://license.556523.xyz"
 LICENSE_PUBLIC_KEY_B64 = "64GiJWL15TKWO_y9q6JpGrG1IHRIyFNkTYILZDjydGQ"
 
 # 可选的本机卡密文件；config/*.json 已被 .gitignore 忽略。
