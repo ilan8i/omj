@@ -3,9 +3,11 @@
 # 脚本进程
 # github https://github.com/runhey
 import multiprocessing
+import os
 from asyncio import QueueEmpty, CancelledError, sleep
 from enum import Enum
 
+from module.license import license_service
 from module.logger import logger
 from module.server.config_manager import ConfigManager
 from module.server.script_websocket import ScriptWSManager
@@ -48,16 +50,26 @@ class ScriptProcess(ScriptWSManager):
         return message
 
     async def start(self):
+        if not license_service.can_start_new_task():
+            logger.warning(f'[{self.config_name}] license invalid, refuse to start')
+            await self.broadcast_state(
+                {
+                    "state": ScriptState.WARNING,
+                    "message": "license_invalid",
+                    "license": license_service.status_dict(),
+                }
+            )
+            return
         self.state = ScriptState.RUNNING
         await self.broadcast_state({"state": self.state})
         if self._process:
             logger.warning(f'Script {self.config_name} is initialized')
         if self._process and self._process.is_alive():
             logger.warning(f'Script {self.config_name} is already running and first stop it')
-            self.stop()
+            await self.stop()
         self._process = _SCRIPT_PROCESS_CONTEXT.Process(
             target=func,
-            args=(self.config_name, self.state_queue, self.log_pipe_in,),
+            args=(self.config_name, self.state_queue, self.log_pipe_in, license_service.token,),
             name=self.config_name,
             daemon=True,
         )
@@ -140,7 +152,14 @@ class ScriptProcess(ScriptWSManager):
             return
 
 
-def func(config: str, state_queue: multiprocessing.Queue, log_pipe_in) -> None:
+def func(
+    config: str,
+    state_queue: multiprocessing.Queue,
+    log_pipe_in,
+    license_token: str | None = None,
+) -> None:
+    if license_token:
+        os.environ["OAS_LICENSE_TOKEN"] = license_token
 
     def start_log() -> None:
         try:

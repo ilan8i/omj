@@ -29,6 +29,11 @@ from module.ocr.rpc import ensure_ocr_server_ready
 from module.script import ScriptRuntimeController, ScriptRuntimeDecision
 from tasks.Restart.server_update import delay_pending_tasks_for_server_update, is_server_update_window
 from module.server.log_service import build_error_log_dir_name
+from module.license import license_service
+from module.license.errors import LicenseError
+from module.license.machine import get_machine_code
+from module.license.permissions import permission_label, required_permission
+from module.license.token import verify_token
 
 _log_switch_lock = threading.Lock()#线程锁
 
@@ -341,11 +346,39 @@ class Script:
         self._set_task_runtime_outcome(task=task, status='server_update_delayed', wait_until=delay_target)
         return True
 
+    def _ensure_license(self) -> None:
+        """子进程启动时校验授权。
+
+        Web 进程会把当前令牌通过环境变量传进来；直接运行 script.py 时
+        没有该变量，则回退到本地缓存/授权服务。
+        """
+        token = os.environ.get('OAS_LICENSE_TOKEN', '')
+        if token:
+            try:
+                verify_token(token, get_machine_code())
+                return
+            except LicenseError as e:
+                logger.warning(f'OAS_LICENSE_TOKEN verify failed: {e.code}')
+        if not license_service.ensure_valid():
+            message = license_service.status_dict().get('message') or 'license invalid'
+            logger.error(f'License check failed: {message}')
+            exit(1)
+
     def run(self, command: str) -> bool:
         """
         :param command:  大写驼峰命名的任务名字
         :return:
         """
+        permission = required_permission(command)
+        if permission:
+            license_service.refresh_local()
+            if not license_service.has_permission(permission):
+                logger.error(
+                    f'Task `{command}` requires permission `{permission}` '
+                    f'({permission_label(permission)}), refuse to run'
+                )
+                return False
+
         if command == 'start' or command == 'goto_main':
             logger.error(f'Invalid command `{command}`')
 
@@ -366,6 +399,7 @@ class Script:
         Main loop of scheduler.
         :return:
         """
+        self._ensure_license()
         with _log_switch_lock:
             logger.set_file_logger(self.config_name, do_cleanup=True)
         start_day = date.today()
@@ -420,6 +454,20 @@ class Script:
             self.device.stuck_record_clear()
             self.device.click_record_clear()
             logger.hr(task, level=0)
+            if not license_service.refresh_local().can_run():
+                logger.error('License expired, stop scheduler')
+                exit(1)
+            permission = required_permission(task)
+            if permission and not license_service.has_permission(permission):
+                logger.error(
+                    f'Task `{task}` requires permission `{permission}` '
+                    f'({permission_label(permission)}), skip and retry later'
+                )
+                self.config.task_delay(
+                    task=task,
+                    target=datetime.now() + timedelta(hours=1),
+                )
+                continue
             self.config.model.running_task = task
             success = self.run(inflection.camelize(task))
             self.config.model.running_task = ''

@@ -1,13 +1,9 @@
 Deploy:
   Git:
-    # URL of OnmyojiAutoScript repository
-    # [CN user] Use a mirror for faster and more stable download
-    # [Other] Use 'https://github.com/runhey/OnmyojiAutoScript'
-    Repository: https://e.coding.net/onmyojiautoscript/oas/OnmyojiAutoScript.git
-    # Branch of OAS
-    # [Developer] Use 'dev', 'app', etc, to try new features
-    # [Other] Use 'master', the stable branch
-    Branch: master
+    # 默认更新源（Gitee 镜像）
+    Repository: https://gitee.com/ilan8i/omj.git
+    # 发布分支
+    Branch: myself
     # Filepath of git executable `git.exe`
     # [Easy installer] Use './toolkit/Git/mingw64/bin/git.exe'
     # [Other] Use you own git

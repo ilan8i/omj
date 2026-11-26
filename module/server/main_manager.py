@@ -11,6 +11,7 @@ from threading import Thread
 
 from module.logger import logger
 from module.config.config import Config
+from module.license import license_service
 from module.server.script_process import ScriptProcess, ScriptState
 from module.server.config_manager import ConfigManager
 
@@ -108,6 +109,9 @@ class MainManager(ConfigManager):
                                                                     name=coroutine_log_name)
 
     async def restart_processes(self, script_instances: list[str]):
+        if not license_service.can_start_new_task():
+            logger.warning('License invalid, skip restart processes')
+            return
         for instance in script_instances:
             logger.info(f'Restart script {instance}')
             if instance not in self.script_process:
@@ -117,6 +121,14 @@ class MainManager(ConfigManager):
                     logger.error(f'{instance} file not found')
                     continue
             await self.script_process[instance].start()
+
+    async def stop_all(self):
+        """授权被吊销时停止所有脚本进程。"""
+        for name, script_p in list(self.script_process.items()):
+            try:
+                await script_p.stop()
+            except Exception as e:
+                logger.warning(f'Stop script {name} failed: {e}')
 
 
 mm = MainManager()

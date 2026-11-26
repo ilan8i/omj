@@ -11,6 +11,8 @@ from datetime import datetime
 from module.config.utils import convert_to_underscore
 
 from module.logger import logger
+from module.license import license_service
+from module.license.permissions import required_permission
 from module.server.api_logger import ApiLoggingRoute, log_ws_event
 from module.server.config_manager import (
     ConfigAlreadyExistsError,
@@ -28,6 +30,20 @@ from tasks.Component.config_base import TimeDelta
 
 
 script_app = APIRouter(route_class=ApiLoggingRoute)
+
+
+def _ensure_task_permission(task: str) -> None:
+    """无权限任务不返回 schema，也不允许直接改配置。"""
+    permission = required_permission(task)
+    if permission and not license_service.has_permission(permission):
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "PERMISSION_DENIED",
+                "message": f"当前授权未开通任务权限: {permission}",
+                "permission": permission,
+            },
+        )
 
 
 @script_app.get('/test')
@@ -246,9 +262,14 @@ async def task_group_copy(task_name: str, group_name: str, dest_config_name: str
 # ---------------------------------   脚本实例管理   ----------------------------------
 @script_app.get('/{script_name}/start')
 async def script_start(script_name: str):
+    if not license_service.can_start_new_task():
+        raise HTTPException(
+            status_code=402,
+            detail=license_service.status_dict(),
+        )
     if script_name not in mm.script_process:
         mm.script_process[script_name] = ScriptProcess(script_name)
-    mm.script_process[script_name].start()
+    await mm.script_process[script_name].start()
     return
 
 @script_app.get('/{script_name}/stop')
@@ -256,15 +277,17 @@ async def script_stop(script_name: str):
     if script_name not in mm.script_process:
         logger.warning(f'[{script_name}] script process does not exist')
         return
-    mm.script_process[script_name].stop()
+    await mm.script_process[script_name].stop()
     return
 
 @script_app.get('/{script_name}/{task}/args')
 async def script_task(script_name: str, task: str):
+    _ensure_task_permission(task)
     return mm.config_cache(script_name).model.script_task(task)
 
 @script_app.put('/{script_name}/{task}/{group}/{argument}/value')
 async def script_set_task_value(script_name: str, task: str, group: str, argument: str, types: str, value):
+    _ensure_task_permission(task)
     try:
         match types:
             case 'integer':
@@ -342,6 +365,16 @@ async def websocket_endpoint(websocket: WebSocket, script_name: str):
                 await script_process.broadcast_state({"schedule": schedule_data})
                 log_ws_event(f"ws[{script_name}] response: {schedule_data}")
             elif data == 'start':
+                if not license_service.can_start_new_task():
+                    await script_process.send_json(
+                        websocket,
+                        {
+                            "error": "license_invalid",
+                            "license": license_service.status_dict(),
+                        },
+                    )
+                    log_ws_event(f"ws[{script_name}] license rejected")
+                    continue
                 await script_process.start()
             elif data == 'stop':
                 await script_process.stop()
