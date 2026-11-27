@@ -11,6 +11,7 @@ if exist "toolkit\.omj_runtime" (
   set "PYTHONHOME=%~dp0toolkit"
   set "PYTHONPATH=%~dp0toolkit\python310.zip;%~dp0toolkit;%~dp0toolkit\Lib\site-packages;%~dp0"
 )
+set "PATH=%~dp0toolkit\Git\mingw64\bin;%PATH%"
 set "PADDLE_PDX_CACHE_HOME=%~dp0models"
 set "HF_HOME=%~dp0models\huggingface"
 set "MODELSCOPE_CACHE=%~dp0models\modelscope"

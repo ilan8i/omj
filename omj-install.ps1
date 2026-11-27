@@ -250,6 +250,18 @@ if (-not (Test-Path $gitExe)) {
     } catch {
         Fail 'Git 运行时解压失败，请检查网络后重试。'
     }
+    # MinGit 把 git-remote-https 放在 mingw64/bin，git 默认只在 libexec 中查找。
+    $gitBin = Join-Path $gitDir 'mingw64\bin'
+    $gitExec = Join-Path $gitDir 'mingw64\libexec\git-core'
+    if (Test-Path $gitBin) {
+        New-Item -ItemType Directory -Force -Path $gitExec | Out-Null
+        foreach ($helper in @('git-remote-http.exe', 'git-remote-https.exe')) {
+            $helperPath = Join-Path $gitBin $helper
+            if (Test-Path $helperPath) {
+                Copy-Item $helperPath $gitExec -Force
+            }
+        }
+    }
     Remove-Item $tmpGit -Force -ErrorAction SilentlyContinue
 }
 
@@ -349,10 +361,10 @@ $pythonPath = $py.Replace('\', '/')
 $deployYaml = @"
 Deploy:
   Git:
-    Repository: https://localhost/omj.git
+    Repository: $Repo
     Branch: $Branch
     GitExecutable: ./toolkit/Git/mingw64/bin/git.exe
-    AutoUpdate: false
+    AutoUpdate: true
     KeepLocalChanges: false
   Python:
     PythonExecutable: $pythonPath
@@ -388,6 +400,7 @@ $startBat = @"
 @echo off
 cd /d "%~dp0"
 set "PYTHONPATH=%~dp0"
+set "PATH=%~dp0toolkit\Git\mingw64\bin;%PATH%"
 set "PADDLE_PDX_CACHE_HOME=%~dp0models"
 set "HF_HOME=%~dp0models\huggingface"
 set "MODELSCOPE_CACHE=%~dp0models\modelscope"

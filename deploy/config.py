@@ -1,9 +1,19 @@
 # This Python file uses the following encoding: utf-8
 import copy
+import os
 from typing import Optional, Union
 
 from deploy.logger import logger
 from deploy.utils import *
+
+# MinGit 的 git-remote-https 依赖 mingw64/bin 下的 DLL，确保它在 PATH 中。
+_git_bin = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "toolkit", "Git", "mingw64", "bin")
+)
+if os.path.isdir(_git_bin):
+    _paths = os.environ.get("PATH", "").split(os.pathsep)
+    if _git_bin not in _paths:
+        os.environ["PATH"] = _git_bin + os.pathsep + os.environ.get("PATH", "")
 
 
 class ExecutionError(Exception):
