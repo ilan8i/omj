@@ -22,3 +22,4 @@ class Installer(GitManager, PipManager, AdbManager, ProcessManager):
 
 if __name__ == '__main__':
     Installer().install()
+    print('下载已完成，请启动 OmjHelper', flush=True)
