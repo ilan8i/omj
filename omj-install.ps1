@@ -18,6 +18,7 @@ $PyVersion = '3.10.11'
 $Port = 22267
 $PypiMirrors = @(
     'https://mirrors.aliyun.com/pypi/simple',
+    'https://mirrors.cloud.tencent.com/pypi/simple',
     'https://pypi.tuna.tsinghua.edu.cn/simple',
     'https://pypi.org/simple'
 )
@@ -232,12 +233,21 @@ if ($pipCode -ne 0) {
     Remove-Item $getPip -Force -ErrorAction SilentlyContinue
 }
 
+$futureWheel = Join-Path $PSScriptRoot 'vendor\future-0.18.3-py3-none-any.whl'
+if (Test-Path $futureWheel) {
+    Info '正在预装 future...'
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--no-deps', '--no-index', $futureWheel)
+    if ($code -ne 0) {
+        Warn 'future 预装失败，将继续尝试在线安装。'
+    }
+}
+
 $requirements = Join-Path $installDir 'requirements.txt'
 Info '正在安装依赖（首次安装需要几分钟）...'
 $usedMirror = ''
 foreach ($mirror in $PypiMirrors) {
     Info "使用源：$mirror"
-    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--retries', '5', '--timeout', '60', '-r', $requirements, '-i', $mirror)
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--retries', '5', '--timeout', '60', '--prefer-binary', '-r', $requirements, '-i', $mirror)
     if ($code -eq 0) {
         $usedMirror = $mirror
         break
