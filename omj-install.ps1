@@ -86,7 +86,7 @@ function Download-File($urls, $dest, $what) {
                 return
             }
         } catch {
-            Warn "下载失败：$($_.Exception.Message)"
+            Warn '下载失败，尝试下一个下载源...'
         }
     }
     Fail "无法下载$what，请检查网络或代理后重试。"
