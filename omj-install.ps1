@@ -96,21 +96,36 @@ function Test-Zip($path) {
 }
 
 function Download-File($urls, $dest, $what, [switch]$Zip) {
+    $curl = Get-Exe 'curl.exe'
     foreach ($url in $urls) {
-        try {
-            Info "正在下载$what..."
-            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 600
-            if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
-                if (-not $Zip -or (Test-Zip $dest)) {
-                    return
-                }
+        Info "正在下载$what..."
+        $ok = $false
+
+        # Gitee 会对 PowerShell 的 Invoke-WebRequest 返回拦截页，优先用 curl.exe。
+        if ($curl) {
+            $code = Invoke-Exe $curl @('-sS', '-L', '--fail', '--retry', '3', '-o', $dest, $url) -Quiet
+            if ($code -eq 0 -and (Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
+                $ok = $true
             }
-            Warn '下载内容无效，尝试下一个下载源...'
-            Remove-Item $dest -Force -ErrorAction SilentlyContinue
-        } catch {
-            Warn '下载失败，尝试下一个下载源...'
-            Remove-Item $dest -Force -ErrorAction SilentlyContinue
         }
+
+        if (-not $ok) {
+            try {
+                Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 600
+                if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
+                    $ok = $true
+                }
+            } catch {
+                $ok = $false
+            }
+        }
+
+        if ($ok -and (-not $Zip -or (Test-Zip $dest))) {
+            return
+        }
+
+        Warn '下载内容无效，尝试下一个下载源...'
+        Remove-Item $dest -Force -ErrorAction SilentlyContinue
     }
     Fail "无法下载$what，请检查网络或代理后重试。"
 }
