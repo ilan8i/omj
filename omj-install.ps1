@@ -25,6 +25,10 @@ $PypiMirrors = @(
 $PyMirrors = @(
     "https://www.nuget.org/api/v2/package/python/$PyVersion"
 )
+$GitMirrors = @(
+    'https://registry.npmmirror.com/-/binary/git-for-windows/v2.47.1.windows.1/MinGit-2.47.1-64-bit.zip',
+    'https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.1/MinGit-2.47.1-64-bit.zip'
+)
 $PipMirrors = @(
     'https://mirrors.aliyun.com/pypi/get-pip.py',
     'https://bootstrap.pypa.io/get-pip.py'
@@ -231,6 +235,24 @@ if (-not $runtimeOk) {
     [System.IO.File]::WriteAllText($runtimeMarker, "nuget-$PyVersion", (New-Object System.Text.UTF8Encoding($false)))
 }
 
+$gitExe = Join-Path $toolkit 'Git\mingw64\bin\git.exe'
+if (-not (Test-Path $gitExe)) {
+    Info '正在下载 Git 运行时...'
+    $tmpGit = Join-Path $env:TEMP 'mingit.zip'
+    Download-File $GitMirrors $tmpGit 'Git 运行时' -Zip
+    $gitDir = Join-Path $toolkit 'Git'
+    if (Test-Path $gitDir) {
+        Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    New-Item -ItemType Directory -Force -Path $gitDir | Out-Null
+    try {
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($tmpGit, $gitDir)
+    } catch {
+        Fail 'Git 运行时解压失败，请检查网络后重试。'
+    }
+    Remove-Item $tmpGit -Force -ErrorAction SilentlyContinue
+}
+
 $pth = Join-Path $toolkit 'python310._pth'
 if (Test-Path $pth) {
     Remove-Item $pth -Force -ErrorAction SilentlyContinue
@@ -253,11 +275,25 @@ if ($pipCode -ne 0) {
 
 Info '正在升级 pip...'
 foreach ($mirror in $PypiMirrors) {
-    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--upgrade', 'pip', 'wheel', '-i', $mirror)
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--upgrade', 'pip', '-i', $mirror)
     if ($code -eq 0) {
         break
     }
     Warn 'pip 升级失败，尝试下一个源...'
+}
+
+Info '正在安装构建工具 wheel...'
+$wheelReady = $false
+foreach ($mirror in $PypiMirrors) {
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--no-deps', 'wheel==0.37.1', '-i', $mirror)
+    if ($code -eq 0) {
+        $wheelReady = $true
+        break
+    }
+    Warn 'wheel 安装失败，尝试下一个源...'
+}
+if (-not $wheelReady) {
+    Fail '构建工具 wheel 安装失败，无法安装源码包。'
 }
 
 $futureWheel = Join-Path $PSScriptRoot 'vendor\future-0.18.3-py3-none-any.whl'
@@ -291,6 +327,9 @@ if ($code -ne 0) {
     Fail '安装兼容版 setuptools 失败，adbutils 将无法导入。'
 }
 
+Info '正在清理构建工具...'
+# wheel 0.37.1 与 requirements 固定的 packaging 20.9 兼容，保留即可。
+
 $adbInToolkit = Join-Path $toolkit 'Lib\site-packages\adbutils\binaries\adb.exe'
 $systemAdb = Get-Exe 'adb'
 if (Test-Path $adbInToolkit) {
@@ -312,7 +351,7 @@ Deploy:
   Git:
     Repository: https://localhost/omj.git
     Branch: $Branch
-    GitExecutable: git
+    GitExecutable: ./toolkit/Git/mingw64/bin/git.exe
     AutoUpdate: false
     KeepLocalChanges: false
   Python:
