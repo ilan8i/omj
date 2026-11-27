@@ -5,9 +5,14 @@
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue
 
 $Branch = 'myself'
-$RepoZip = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('aHR0cHM6Ly9naXRlZS5jb20vaWFsbjhpL29tai9yZXBvc2l0b3J5L2FyY2hpdmUvbXlzZWxmLnppcA=='))
+$RepoZipMirrors = @(
+    [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('aHR0cHM6Ly9naXRlZS5jb20vaWFsbjhpL29tai9yZXBvc2l0b3J5L2FyY2hpdmUvbXlzZWxmLnppcA==')),
+    [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('aHR0cHM6Ly9naXRodWIuY29tL2lsYW44aS9vbWovYXJjaGl2ZS9yZWZzL2hlYWRzL215c2VsZi56aXA='))
+)
+$RepoZip = $RepoZipMirrors[0]
 $Repo = $RepoZip.Substring(0, $RepoZip.IndexOf('/repository/')) + '.git'
 $PyVersion = '3.10.11'
 $Port = 22267
@@ -77,16 +82,34 @@ function Invoke-Exe($file, $arguments, [switch]$Quiet) {
     return $proc.ExitCode
 }
 
-function Download-File($urls, $dest, $what) {
+function Test-Zip($path) {
+    try {
+        $zip = [System.IO.Compression.ZipFile]::OpenRead($path)
+        try {
+            return ($zip.Entries.Count -gt 0)
+        } finally {
+            $zip.Dispose()
+        }
+    } catch {
+        return $false
+    }
+}
+
+function Download-File($urls, $dest, $what, [switch]$Zip) {
     foreach ($url in $urls) {
         try {
             Info "正在下载$what..."
-            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 120
+            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 600
             if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
-                return
+                if (-not $Zip -or (Test-Zip $dest)) {
+                    return
+                }
             }
+            Warn '下载内容无效，尝试下一个下载源...'
+            Remove-Item $dest -Force -ErrorAction SilentlyContinue
         } catch {
             Warn '下载失败，尝试下一个下载源...'
+            Remove-Item $dest -Force -ErrorAction SilentlyContinue
         }
     }
     Fail "无法下载$what，请检查网络或代理后重试。"
@@ -94,6 +117,7 @@ function Download-File($urls, $dest, $what) {
 
 # 安装目录中不保留真实仓库地址。
 function Hide-RepoAddress($root) {
+    if ([string]::IsNullOrEmpty($Repo)) { return }
     $fake = 'https://localhost/omj.git'
     foreach ($rel in @('deploy/template', 'deploy/config.py')) {
         $file = Join-Path $root $rel
@@ -126,8 +150,12 @@ if ($hasRepoFiles) {
     }
     $tmpZip = Join-Path $env:TEMP 'omj-release.zip'
     $tmpDir = Join-Path $env:TEMP ("omj-unzip-" + [Guid]::NewGuid().ToString('N'))
-    Download-File @($RepoZip) $tmpZip 'OMJ 安装包'
-    Expand-Archive -Path $tmpZip -DestinationPath $tmpDir -Force
+    Download-File $RepoZipMirrors $tmpZip 'OMJ 安装包' -Zip
+    try {
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($tmpZip, $tmpDir)
+    } catch {
+        Fail '安装包解压失败，请检查网络后重试。'
+    }
     $source = Get-ChildItem -Path $tmpDir -Directory | Select-Object -First 1
     if (-not $source) {
         Fail '压缩包内容异常，未找到安装目录。'
@@ -152,9 +180,13 @@ $py = Join-Path $toolkit 'python.exe'
 if (-not (Test-Path $py)) {
     Info "正在下载 Python $PyVersion 运行环境..."
     $tmpPy = Join-Path $env:TEMP "python-$PyVersion-embed-amd64.zip"
-    Download-File $PyMirrors $tmpPy 'Python 运行时'
+    Download-File $PyMirrors $tmpPy 'Python 运行时' -Zip
     New-Item -ItemType Directory -Force -Path $toolkit | Out-Null
-    Expand-Archive -Path $tmpPy -DestinationPath $toolkit -Force
+    try {
+        Expand-Archive -Path $tmpPy -DestinationPath $toolkit -Force
+    } catch {
+        Fail 'Python 运行时解压失败，请检查网络后重试。'
+    }
     Remove-Item $tmpPy -Force -ErrorAction SilentlyContinue
 
     $pth = Join-Path $toolkit 'python310._pth'
