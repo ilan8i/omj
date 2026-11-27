@@ -14,14 +14,14 @@ Gitee 是发布源，只保留一个发布提交；完整提交历史见 GitHub�
 
 ## 一键安装（Windows）
 
-需要先安装 Python 3.10–3.12（勾选 Add Python to PATH）和 Git for Windows。
+脚本自带 Python 3.10.11 运行环境，无需预先安装 Python 或 Git；首次安装需要联网下载运行时和依赖。
 
 1. 从 Gitee 下载仓库压缩包并解压（不要直接在压缩软件里运行）；
 2. 双击 `omj-install.bat`；
-3. 脚本会克隆到 `%USERPROFILE%\OMJ`，创建虚拟环境、安装依赖并启动网页端。
+3. 脚本会把 OMJ 安装到 `%USERPROFILE%\OMJ`，自动下载 Python 3.10 运行时、安装依赖并启动网页端。
 
 默认仓库为 `https://gitee.com/ialn8i/omj`，分支 `myself`。安装完成后可双击
-`start-omj.bat` 启动。
+`start-omj.bat` 启动。检测到 Git 时用 Git 更新，否则直接下载 Gitee 压缩包。
 
 ## 本地授权配置
 
