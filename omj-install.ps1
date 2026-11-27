@@ -143,8 +143,8 @@ if ($installDir -ne $PSScriptRoot) {
     if (Test-Path $gitDir) {
         Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue
     }
+    Hide-RepoAddress $installDir
 }
-Hide-RepoAddress $installDir
 
 $toolkit = Join-Path $installDir 'toolkit'
 $py = Join-Path $toolkit 'python.exe'
@@ -215,17 +215,17 @@ $pythonPath = $py.Replace('\', '/')
 $deployYaml = @"
 Deploy:
   Git:
-    Repository: "https://localhost/omj.git"
-    Branch: "$Branch"
-    GitExecutable: "git"
+    Repository: https://localhost/omj.git
+    Branch: $Branch
+    GitExecutable: git
     AutoUpdate: false
     KeepLocalChanges: false
   Python:
-    PythonExecutable: "$pythonPath"
-    PypiMirror: "$usedMirror"
+    PythonExecutable: $pythonPath
+    PypiMirror: $usedMirror
     InstallDependencies: false
   Adb:
-    AdbExecutable: "$adbPath"
+    AdbExecutable: $adbPath
     ReplaceAdb: $adbOk
     AutoConnect: $adbOk
     InstallUiautomator2: $adbOk
