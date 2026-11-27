@@ -134,7 +134,7 @@ function Download-File($urls, $dest, $what, [switch]$Zip) {
 function Hide-RepoAddress($root) {
     if ([string]::IsNullOrEmpty($Repo)) { return }
     $fake = 'https://localhost/omj.git'
-    foreach ($rel in @('deploy/template', 'deploy/config.py')) {
+    foreach ($rel in @('deploy/template', 'deploy/config.py', 'config/deploy.yaml')) {
         $file = Join-Path $root $rel
         if (-not (Test-Path $file)) { continue }
         $text = [System.IO.File]::ReadAllText($file)
@@ -149,22 +149,33 @@ Info '开始安装 OMJ...'
 
 if ($InstallDir) {
     $installDir = [System.IO.Path]::GetFullPath($InstallDir)
-} elseif (Test-Path (Join-Path $PSScriptRoot '.git')) {
-    $installDir = $PSScriptRoot
 } else {
-    $installDir = Join-Path $env:USERPROFILE 'OMJ'
+    $installDir = $PSScriptRoot
 }
+$isDevRepo = ($installDir -eq $PSScriptRoot) -and (Test-Path (Join-Path $PSScriptRoot '.git'))
+$downloadDir = Join-Path $installDir '.download'
+$origTemp = $env:TEMP
+$origTmp = $env:TMP
 
 $hasRepoFiles = Test-Path (Join-Path $installDir 'server.py')
+
+if (-not $hasRepoFiles -and $installDir -ne $PSScriptRoot) {
+    if ((Test-Path $installDir) -and (Get-ChildItem $installDir -Force | Select-Object -First 1)) {
+        Fail "安装目录非空：$installDir。请移走其中的文件后重试。"
+    }
+}
+
+New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null
+$env:TEMP = Join-Path $downloadDir 'tmp'
+$env:TMP = $env:TEMP
+$env:PIP_CACHE_DIR = Join-Path $downloadDir 'pip-cache'
+New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
 
 if ($hasRepoFiles) {
     Info "检测到已解压的 OMJ：$installDir"
 } else {
-    if ((Test-Path $installDir) -and (Get-ChildItem $installDir -Force | Select-Object -First 1)) {
-        Fail "安装目录非空：$installDir。请移走其中的文件后重试。"
-    }
-    $tmpZip = Join-Path $env:TEMP 'omj-release.zip'
-    $tmpDir = Join-Path $env:TEMP ("omj-unzip-" + [Guid]::NewGuid().ToString('N'))
+    $tmpZip = Join-Path $downloadDir 'omj-release.zip'
+    $tmpDir = Join-Path $downloadDir ("omj-unzip-" + [Guid]::NewGuid().ToString('N'))
     Download-File $RepoZipMirrors $tmpZip 'OMJ 安装包' -Zip
     try {
         [System.IO.Compression.ZipFile]::ExtractToDirectory($tmpZip, $tmpDir)
@@ -180,8 +191,8 @@ if ($hasRepoFiles) {
     Remove-Item $tmpZip, $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-# 旧版按 Git 克隆安装时，.git/config 会保留远程地址；发布模式下直接移除。
-if ($installDir -ne $PSScriptRoot) {
+# 仅在非开发仓库目录中清理真实仓库地址。
+if (-not $isDevRepo) {
     $gitDir = Join-Path $installDir '.git'
     if (Test-Path $gitDir) {
         Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue
@@ -300,10 +311,23 @@ try {
 $startBat = @"
 @echo off
 cd /d "%~dp0"
+set "PADDLE_PDX_CACHE_HOME=%~dp0models"
+set "HF_HOME=%~dp0models\huggingface"
+set "MODELSCOPE_CACHE=%~dp0models\modelscope"
 "toolkit\python.exe" server.py
 pause
 "@
 [System.IO.File]::WriteAllText((Join-Path $installDir 'start-omj.bat'), $startBat, $utf8NoBom)
+
+$env:TEMP = $origTemp
+$env:TMP = $origTmp
+Remove-Item Env:PIP_CACHE_DIR -ErrorAction SilentlyContinue
+Remove-Item $downloadDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$modelsDir = Join-Path $installDir 'models'
+$env:PADDLE_PDX_CACHE_HOME = $modelsDir
+$env:HF_HOME = Join-Path $modelsDir 'huggingface'
+$env:MODELSCOPE_CACHE = Join-Path $modelsDir 'modelscope'
 
 Info '启动 OMJ 服务...'
 Start-Process -FilePath $py -ArgumentList 'server.py' -WorkingDirectory $installDir
