@@ -10,7 +10,7 @@
 git clone https://gitee.com/ialn8i/omj.git
 ```
 
-Gitee 是 GitHub 的只读镜像，发布分支为 `myself`。
+Gitee 是发布源，只保留一个发布提交；完整提交历史见 GitHub。发布分支为 `myself`。
 
 ## 一键安装（Windows）
 
