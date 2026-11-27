@@ -21,8 +21,8 @@ $PyMirrors = @(
     "https://www.python.org/ftp/python/$PyVersion/python-$PyVersion-embed-amd64.zip"
 )
 $PipMirrors = @(
-    'https://bootstrap.pypa.io/get-pip.py',
-    'https://mirrors.aliyun.com/pypi/get-pip.py'
+    'https://mirrors.aliyun.com/pypi/get-pip.py',
+    'https://bootstrap.pypa.io/get-pip.py'
 )
 
 function Info($message) {
@@ -44,11 +44,44 @@ function Get-Exe($name) {
     return $null
 }
 
+# PowerShell 5.1 在 ErrorActionPreference=Stop 时会把原生命令的 stderr
+# 当成终止错误（NativeCommandError）。这里绕过 PowerShell 的原生命令调用，
+# 直接用 Process 执行并返回退出码，避免误导性的红色报错。
+function Invoke-Exe($file, $arguments, [switch]$Quiet) {
+    $argLine = ($arguments | ForEach-Object {
+        $a = [string]$_
+        if ($a -match '\s') { '"' + ($a -replace '"', '\"') + '"' } else { $a }
+    }) -join ' '
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $file
+    $psi.Arguments = $argLine
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::Default
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::Default
+
+    $proc = [System.Diagnostics.Process]::Start($psi)
+    $outTask = $proc.StandardOutput.ReadToEndAsync()
+    $errTask = $proc.StandardError.ReadToEndAsync()
+    $proc.WaitForExit()
+    $out = $outTask.Result
+    $err = $errTask.Result
+
+    if (-not $Quiet) {
+        if ($out) { Write-Host $out.TrimEnd() }
+        if ($proc.ExitCode -ne 0 -and $err) { Write-Host $err.TrimEnd() -ForegroundColor DarkGray }
+    }
+    return $proc.ExitCode
+}
+
 function Download-File($urls, $dest, $what) {
     foreach ($url in $urls) {
         try {
             Info "下载$what：$url"
-            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 300
+            Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 120
             if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
                 return
             }
@@ -78,8 +111,8 @@ if ($hasGitRepo) {
         Info '检测到已安装的 OMJ，正在更新...'
         Push-Location $installDir
         try {
-            & $git pull --ff-only
-            if ($LASTEXITCODE -ne 0) {
+            $code = Invoke-Exe $git @('pull', '--ff-only')
+            if ($code -ne 0) {
                 Warn '自动更新失败，将继续使用当前版本。'
             }
         } finally {
@@ -90,8 +123,8 @@ if ($hasGitRepo) {
     Info "检测到已解压的 OMJ：$installDir"
 } elseif ($git) {
     Info "正在克隆 $Repo ..."
-    & $git clone --depth 1 --branch $Branch $Repo $installDir
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-Exe $git @('clone', '--depth', '1', '--branch', $Branch, $Repo, $installDir)
+    if ($code -ne 0) {
         Fail '克隆仓库失败，请检查网络后重试。'
     }
 } else {
@@ -128,13 +161,13 @@ if (-not (Test-Path $py)) {
     [System.IO.File]::WriteAllText($pth, $pthContent, (New-Object System.Text.UTF8Encoding($false)))
 }
 
-& $py -m pip --version *> $null
-if ($LASTEXITCODE -ne 0) {
+$pipCode = Invoke-Exe $py @('-c', 'import pip') -Quiet
+if ($pipCode -ne 0) {
     Info '正在安装 pip...'
     $getPip = Join-Path $toolkit 'get-pip.py'
     Download-File $PipMirrors $getPip 'pip 安装脚本'
-    & $py $getPip --no-warn-script-location
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-Exe $py @($getPip, '--no-warn-script-location')
+    if ($code -ne 0) {
         Fail 'pip 安装失败。'
     }
     Remove-Item $getPip -Force -ErrorAction SilentlyContinue
@@ -145,8 +178,8 @@ Info '正在安装依赖（首次安装需要几分钟）...'
 $usedMirror = ''
 foreach ($mirror in $PypiMirrors) {
     Info "使用源：$mirror"
-    & $py -m pip install --disable-pip-version-check --no-warn-script-location --retries 5 --timeout 60 -r $requirements -i $mirror
-    if ($LASTEXITCODE -eq 0) {
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--retries', '5', '--timeout', '60', '-r', $requirements, '-i', $mirror)
+    if ($code -eq 0) {
         $usedMirror = $mirror
         break
     }
@@ -157,8 +190,8 @@ if (-not $usedMirror) {
 }
 
 Info '正在校准 setuptools（保留 pkg_resources）...'
-& $py -m pip install --disable-pip-version-check --no-warn-script-location --retries 5 --timeout 60 'setuptools==80.9.0' -i $usedMirror
-if ($LASTEXITCODE -ne 0) {
+$code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--retries', '5', '--timeout', '60', 'setuptools==80.9.0', '-i', $usedMirror)
+if ($code -ne 0) {
     Fail '安装兼容版 setuptools 失败，adbutils 将无法导入。'
 }
 
@@ -209,8 +242,8 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 Push-Location $installDir
 try {
     Info '正在初始化运行环境...'
-    & $py -m deploy.installer
-    if ($LASTEXITCODE -ne 0) {
+    $code = Invoke-Exe $py @('-m', 'deploy.installer')
+    if ($code -ne 0) {
         Fail '运行环境初始化失败，请查看上方日志。'
     }
 } finally {
