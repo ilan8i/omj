@@ -362,7 +362,7 @@ Deploy:
     AdbExecutable: $adbPath
     ReplaceAdb: $adbOk
     AutoConnect: $adbOk
-    InstallUiautomator2: $adbOk
+    InstallUiautomator2: false
   Webui:
     Language: zh-CN
     WebuiPort: $Port

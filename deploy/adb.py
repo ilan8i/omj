@@ -53,7 +53,10 @@ class AdbManager(DeployConfig):
                 if k.lower().endswith('_proxy'):
                     del os.environ[k]
 
-            for device in adbutils.adb.iter_device():
+            devices = list(adbutils.adb.iter_device())
+            if not devices:
+                logger.info('No device connected, skip uiautomator2 init')
+            for device in devices:
                 initer = init.Initer(device, loglevel=logging.DEBUG)
                 # MuMu X has no ro.product.cpu.abi, pick abi from ro.product.cpu.abilist
                 if initer.abi not in ['x86_64', 'x86', 'arm64-v8a', 'armeabi-v7a', 'armeabi']:
