@@ -49,7 +49,7 @@ if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
 
-    c = Config('oas1')
+    c = Config('omj1')
     d = Device(c)
     t = Consignment(c, d)
 

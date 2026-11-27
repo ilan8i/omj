@@ -1,6 +1,6 @@
 """竖屏应用 UI 操作混入（Mixin）。
 
-OAS 默认横屏 1280x720：minitouch 的 convert()（module/device/method/minitouch.py）
+OMJ 默认横屏 1280x720：minitouch 的 convert()（module/device/method/minitouch.py）
 与 nemu_ipc 的 convert_xy() 都按横屏缩放坐标。操作原生竖屏应用（720x1280,
 orientation=0，如网易大神 com.netease.gl）时，必须绕开 minitouch 改用 adb input tap
 直传原始坐标，并跳过会反复调 dumpsys 的 check_screen_size。
@@ -52,7 +52,7 @@ class PortraitUIMixin(BaseTask):
         self._adb_shell(['input', 'swipe', str(x1), str(y1), str(x2), str(y2), str(duration)])
 
     def _screenshot_safe(self):
-        """竖屏截图：优先配置方法（self.screenshot），失败回退 OAS 自带 adb 截图。"""
+        """竖屏截图：优先配置方法（self.screenshot），失败回退 OMJ 自带 adb 截图。"""
         try:
             self.screenshot()
             return

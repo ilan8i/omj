@@ -1,6 +1,6 @@
 name: ✨功能请求
 title: '✨'
-description: 为 oas 提出一个新的想法或建议
+description: 为 OMJ 提出一个新的想法或建议
 labels: 'enhancement'
 body:
   - type: textarea

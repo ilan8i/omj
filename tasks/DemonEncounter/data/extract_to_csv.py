@@ -16,7 +16,7 @@ class Extracter:
     @staticmethod
     def parse_one(value: str) -> tuple:
         """
-        解析原始的一行数据，变成OAS使用的格式: question,answer
+        解析原始的一行数据，变成OMJ使用的格式: question,answer
         :param value:
         :return:
         """

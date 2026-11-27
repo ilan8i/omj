@@ -33,8 +33,8 @@ async def lifespan(app: FastAPI):
     await on_shutdown()
 
 app = FastAPI(
-    title='OAS',
-    description='OAS web service',
+    title='OMJ',
+    description='OMJ web service',
     version='0.0.0',
     lifespan=lifespan,
 )
@@ -67,7 +67,7 @@ async def on_startup():
     ensure_api_logger()
     license_service.on_revoked = mm.stop_all
     app.state.license_task = asyncio.create_task(license_service.heartbeat_loop())
-    logger.info('OAS web service startup done')
+    logger.info('OMJ web service startup done')
     if app.state.script_instances:
         await mm.restart_processes(app.state.script_instances)
 
@@ -81,7 +81,7 @@ async def on_shutdown():
         except asyncio.CancelledError:
             pass
     license_service.stop()
-    logger.info('OAS web service shutdown done')
+    logger.info('OMJ web service shutdown done')
 
 
 @app.exception_handler(Exception)
@@ -99,9 +99,9 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 def fastapi_app():
-    parser = argparse.ArgumentParser(description="OAS web service")
+    parser = argparse.ArgumentParser(description="OMJ web service")
     parser.add_argument(
-        "-k", "--key", type=str, help="Password of OAS. No password by default"
+        "-k", "--key", type=str, help="Password of OMJ. No password by default"
     )
     parser.add_argument(
         "--cdn",
@@ -112,7 +112,7 @@ def fastapi_app():
         "--run",
         nargs="+",
         type=str,
-        help="Run OAS by config names on startup",
+        help="Run OMJ by config names on startup",
     )
     args, _ = parser.parse_known_args()
     # ------------------------------------------------------------------------------------------------------------------

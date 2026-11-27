@@ -65,7 +65,7 @@ def empty_function(*args, **kwargs):
     pass
 
 
-# Ensure running in OAS root folder
+# Ensure running in OMJ root folder
 os.chdir(os.path.join(os.path.dirname(__file__), '../'))
 # cnocr will set root logger in cnocr.utils
 # Delete logging.basicConfig to avoid logging the same message twice.
@@ -499,7 +499,7 @@ def show():
     logger.hr('hr3', 3)
     logger.info(r'Brace { [ ( ) ] }')
     logger.info(r'True, False, None')
-    logger.info(r'E:/path\\to/oas/oas.exe, /root/oas/, ./relative/path/log.txt')
+    logger.info(r'E:/path\\to/omj/omj.exe, /root/omj/, ./relative/path/log.txt')
     logger.info('Tests very long strings. Tests very long strings. Tests very long strings. Tests very long strings. Tests very long strings.')
     local_var1 = 'This is local variable'
     # Line before exception

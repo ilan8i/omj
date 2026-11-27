@@ -1,5 +1,5 @@
-# docker build -t qwerty/oas:latest .
-# docker run -v ${PWD}:/app/OnmyojiAutoScript -p 22288:22288 --name oas -it --rm qwerty/oas
+# docker build -t omj-env:latest .
+# docker run -v ${PWD}:/app/OnmyojiAutoScript -p 22288:22288 --name omj-env -it --rm omj-env
 
 
 FROM python:3.10-slim-bookworm

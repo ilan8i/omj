@@ -200,7 +200,7 @@ if __name__ == '__main__':
     from module.device.device import Device
     from tasks.WantedQuests.assets import WantedQuestsAssets
 
-    config = Config('oas1')
+    config = Config('omj1')
     device = Device(config)
     t = WQExplore(config, device)
     t.explore(goto=WantedQuestsAssets.I_GOTO_1, num=2)

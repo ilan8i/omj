@@ -12,6 +12,17 @@ git clone https://gitee.com/ialn8i/omj.git
 
 Gitee 是 GitHub 的只读镜像，发布分支为 `myself`。
 
+## 一键安装（Windows）
+
+需要先安装 Python 3.10–3.12（勾选 Add Python to PATH）和 Git for Windows。
+
+1. 从 Gitee 下载仓库压缩包并解压（不要直接在压缩软件里运行）；
+2. 双击 `omj-install.bat`；
+3. 脚本会克隆到 `%USERPROFILE%\OMJ`，创建虚拟环境、安装依赖并启动网页端。
+
+默认仓库为 `https://gitee.com/ialn8i/omj`，分支 `myself`。安装完成后可双击
+`start-omj.bat` 启动。
+
 ## 本地授权配置
 
 授权服务地址和 Ed25519 公钥已经随代码发布，用户不需要自己创建配置文件。
@@ -63,13 +74,13 @@ server.py
 
 ```text
 dist/private/
-dist/OAS-private-<时间>.zip
+dist/OMJ-private-<时间>.zip
 ```
 
 说明：
 
 - 需要在 Windows + MSVC 环境执行，推荐用 GitHub Actions 的 `build-private` 工作流；
 - `script.py` / `server.py` 在发行目录里会替换成很薄的启动 stub，逻辑在 `.pyd` 中；
-- `package_private.py` 生成的是**覆盖包**，不包含 `toolkit/` 运行时，需要叠加在已有 OAS 安装目录上；
+- `package_private.py` 生成的是**覆盖包**，不包含 `toolkit/` 运行时，需要叠加在已有 OMJ 安装目录上；
 - 真正的源码私密前提是 **GitHub 仓库本身是私有的**；仓库公开时编译不能阻止别人直接看 `.py`；
-- OAS 是 GPL-3.0，对外分发时请自行确认合规。
+- OMJ 是 GPL-3.0，对外分发时请自行确认合规。

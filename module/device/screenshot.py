@@ -283,7 +283,7 @@ class Screenshot(Adb, DroidCast, Scrcpy, Window, NemuIpc):
 
 
 if __name__ == "__main__":
-    s = Screenshot(config="oas1")
+    s = Screenshot(config="omj1")
     s.screenshot()
 
     s.image_show()

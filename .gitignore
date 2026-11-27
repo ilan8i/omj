@@ -28,9 +28,9 @@ test/
 !dev_tools/*
 dev_tools/assets_test.py
 #hya
-deploy/launcher/oas-backend.bat
-deploy/launcher/oas-server.bat
-oas-backend.bat
+deploy/launcher/omj-backend.bat
+deploy/launcher/omj-server.bat
+omj-backend.bat
 .eslintignore
 .eslintrc.js
 .prettierrc.js
@@ -267,5 +267,5 @@ adb_port.ini
 console.bat
 .vscode/*
 tasks/AutoCheckinBigGod/frida-server-17.6.2-android-x86_64
-oas.bat
+omj.bat
 /data/frog_oas/

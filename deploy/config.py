@@ -12,8 +12,8 @@ class ExecutionError(Exception):
 
 class ConfigModel:
     # Git
-    Repository: str = "https://gitcode.com/OnmyojiAutoScript/OnmyojiAutoScript.git"
-    Branch: str = "master"
+    Repository: str = "https://gitee.com/ialn8i/omj.git"
+    Branch: str = "myself"
     GitExecutable: str = "./toolkit/Git/mingw64/bin/git.exe"
     GitProxy: Optional[str] = None
     SSLVerify: bool = False
@@ -99,9 +99,12 @@ class DeployConfig(ConfigModel):
     def read(self):
         self.config = poor_yaml_read(DEPLOY_TEMPLATE)
         # https://e.coding.net/onmyojiautoscript/oas/OnmyojiAutoScript.git
-        # 2025.09.01 腾讯coding跑路了
-        if self.config["Repository"].startswith("https://e.coding.net/"):
-            self.config["Repository"] = "https://gitcode.com/OnmyojiAutoScript/OnmyojiAutoScript.git"
+        # 2025.09.01 腾讯coding跑路了；后续统一迁移到 Gitee 发布源。
+        if self.config["Repository"].startswith(
+            ("https://e.coding.net/", "https://gitcode.com/")
+        ):
+            self.config["Repository"] = "https://gitee.com/ialn8i/omj.git"
+            self.config["Branch"] = "myself"
         self.config_template = copy.deepcopy(self.config)
         self.config.update(poor_yaml_read(self.file))
         unknown_keys = [key for key in list(self.config.keys()) if not hasattr(self, key)]
@@ -175,6 +178,6 @@ class DeployConfig(ConfigModel):
         logger.info(f"Last command: {command}")
         logger.info(
             "Please check your deploy settings in config/deploy.yaml "
-            "and re-open OAS.exe"
+            "and re-open OMJ.exe"
         )
         logger.info("Take the screenshot of entire window if you need help")

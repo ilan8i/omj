@@ -39,7 +39,7 @@ def main() -> int:
         for source in MODULES
     ]
     setup(
-        name="oas-private-build",
+        name="omj-private-build",
         ext_modules=cythonize(
             extensions,
             build_dir=str(ROOT / "build" / "cython"),

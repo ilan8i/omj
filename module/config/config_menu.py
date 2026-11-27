@@ -46,7 +46,7 @@ class ConfigMenu:
 
     @property
     def gui_menu_list(self) -> dict:
-        """返回给 OASX 的菜单；无权限的任务不显示。"""
+        """返回给 OMJHelper 的菜单；无权限的任务不显示。"""
         from module.license import license_service
         from module.license.permissions import required_permission
 
@@ -60,7 +60,7 @@ class ConfigMenu:
                 if permission and not license_service.has_permission(permission):
                     continue
                 visible.append(task)
-            # 空分组不返回，避免 OASX 显示空标题；Overview/Script 始终保留。
+            # 空分组不返回，避免 OMJHelper 显示空标题；Overview/Script 始终保留。
             if visible or group in ('Overview', 'Script'):
                 result[group] = visible
         return result

@@ -372,7 +372,7 @@ class Adb(Connection):
 
 
 if __name__ == "__main__":
-    adb = Adb(config='oas1')
+    adb = Adb(config='omj1')
     # logger.info(adb.app_start_adb())
     cv2.imshow("iiii", adb.screenshot_adb_nc())
     cv2.waitKey(0)

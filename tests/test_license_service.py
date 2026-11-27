@@ -66,7 +66,7 @@ def test_activate_success(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    status = license_service.activate("OAS-KEY")
+    status = license_service.activate("OMJ-KEY")
     assert status.state == LicenseState.ACTIVE
     assert status.plan == "month_30d"
     assert license_service.has_permission("switch_account")
@@ -81,7 +81,7 @@ def test_heartbeat_network_error_keeps_active(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
 
     def _fail(*args, **kwargs):
         raise LicenseError(NETWORK_ERROR, "offline")
@@ -97,7 +97,7 @@ def test_heartbeat_network_error_enters_grace(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
 
     state["claims"] = _claims(now - 1, now + 86400)
 
@@ -115,7 +115,7 @@ def test_heartbeat_network_error_expires_beyond_grace(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
 
     state["claims"] = _claims(now - 1, now + 86400)
     license_service._last_ok_at = (
@@ -136,7 +136,7 @@ def test_heartbeat_server_revoked(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
 
     def _revoked(*args, **kwargs):
         raise LicenseError(LICENSE_REVOKED, "revoked", server_denied=True)
@@ -165,7 +165,7 @@ def test_heartbeat_token_expired_reactivates(svc, monkeypatch):
         return _response(now)
 
     monkeypatch.setattr(service_mod.client, "activate", _activate)
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
     assert calls["activate"] == 1
 
     def _expired(*args, **kwargs):
@@ -183,7 +183,7 @@ def test_deactivate_clears_permissions(svc, monkeypatch):
     monkeypatch.setattr(
         service_mod.client, "activate", lambda *args, **kwargs: _response(now)
     )
-    license_service.activate("OAS-KEY")
+    license_service.activate("OMJ-KEY")
     assert license_service.has_permission("switch_account")
 
     license_service.deactivate()

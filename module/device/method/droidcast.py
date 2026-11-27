@@ -348,6 +348,6 @@ class DroidCast(Uiautomator2):
 
 
 if __name__ == '__main__':
-    dc = DroidCast(config='oas1')
+    dc = DroidCast(config='omj1')
     cv2.imshow("iiii", dc.screenshot_droidcast_raw())
     cv2.waitKey(0)

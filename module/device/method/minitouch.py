@@ -633,5 +633,5 @@ class Minitouch(Connection):
         self.minitouch_send()
 
 if __name__ == '__main__':
-    mm = Minitouch(config='oas1')
+    mm = Minitouch(config='omj1')
     mm.click_minitouch(200, 150)

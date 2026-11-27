@@ -39,7 +39,7 @@ _log_switch_lock = threading.Lock()#线程锁
 
 
 class Script:
-    def __init__(self, config_name: str ='oas') -> None:
+    def __init__(self, config_name: str ='omj') -> None:
         logger.hr('Start', level=0)
         self.state_queue: Queue = None
         self._emulator_down = False
@@ -88,7 +88,7 @@ class Script:
     @cached_property
     def checker(self):
         """
-        占位函数，在OAS中是检查服务器是否正常的
+        占位函数，在OMJ中是检查服务器是否正常的
         :return:
         """
         return None
@@ -542,7 +542,7 @@ class Script:
                 self._last_error_log_task = command
             self.exception_handler(e=e, command=command)
             logger.warning(f'Game stuck, {self.device.package} will be restarted in 10 seconds')
-            logger.warning('If you are playing by hand, please stop OAS')
+            logger.warning('If you are playing by hand, please stop OMJ')
             self._push_error(
                 command,
                 f"<{self.config_name}> GameStuckError or GameTooManyClickError",
@@ -558,7 +558,7 @@ class Script:
             if error_log_dir:
                 self._last_error_log_task = command
             self.exception_handler(e=e, command=command)
-            logger.warning('An error has occurred in Onmyoji game client, OAS is unable to handle')
+            logger.warning('An error has occurred in Onmyoji game client, OMJ is unable to handle')
             logger.warning(f'Restarting {self.device.package} to fix it')
             self.config.task_call('Restart')
             self.device.sleep(10)
@@ -641,5 +641,5 @@ class Script:
 if __name__ == "__main__":
     ensure_image_server_ready()
     ensure_ocr_server_ready()
-    script = Script("oas1")
+    script = Script("omj1")
     script.loop()

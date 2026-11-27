@@ -73,7 +73,7 @@ def test_status(client):
 
 def test_activate_success(client):
     http, fake = client
-    response = http.post("/license/activate", json={"key": "OAS-TEST"})
+    response = http.post("/license/activate", json={"key": "OMJ-TEST"})
     assert response.status_code == 200
     assert response.json()["code"] == "OK"
 
@@ -91,7 +91,7 @@ def test_activate_machine_mismatch(client):
     fake.activate_error = LicenseError(
         MACHINE_MISMATCH, "bound", server_denied=True
     )
-    response = http.post("/license/activate", json={"key": "OAS-TEST"})
+    response = http.post("/license/activate", json={"key": "OMJ-TEST"})
     assert response.status_code == 409
 
 
@@ -104,7 +104,7 @@ def test_deactivate(client):
 
 
 def test_script_start_returns_402(monkeypatch):
-    # 该用例会导入完整 OAS 配置模型，最小环境没有 cv2 时跳过。
+    # 该用例会导入完整 OMJ 配置模型，最小环境没有 cv2 时跳过。
     pytest.importorskip("cv2")
     from module.server import script_router
 
@@ -118,5 +118,5 @@ def test_script_start_returns_402(monkeypatch):
     app = FastAPI()
     app.include_router(script_router.script_app)
     http = TestClient(app)
-    response = http.get("/oas/start")
+    response = http.get("/omj/start")
     assert response.status_code == 402

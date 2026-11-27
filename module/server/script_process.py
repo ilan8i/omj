@@ -194,7 +194,7 @@ def func(
 
 
 if __name__ == '__main__':
-    p = ScriptProcess('oas1')
+    p = ScriptProcess('omj1')
     p.start()
     from time import sleep
     sleep(10)

@@ -1,12 +1,12 @@
 
 services:
-    OAS:
+    OMJ:
         network_mode: host
         volumes:
             - '.:/app/OnmyojiAutoScript:rw'
             - '/etc/localtime:/etc/localtime:ro'
-        container_name: 'oas-env'
-        image: 'oas-env'
+        container_name: 'omj-env'
+        image: 'omj-env'
         build:
             context: ./deploy/docker/
             dockerfile: ./Dockerfile

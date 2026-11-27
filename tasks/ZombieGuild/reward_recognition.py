@@ -23,7 +23,7 @@ def _blue_ticket_template() -> np.ndarray:
 
 
 def _read_quantity(image: np.ndarray) -> tuple[str, float]:
-    # Reuse OAS's local OCR service; never send reward screenshots to a vision API.
+    # Reuse OMJ's local OCR service; never send reward screenshots to a vision API.
     from module.ocr.models import get_ocr_model
 
     return get_ocr_model().ocr_single_line(image)
@@ -42,7 +42,7 @@ def count_blue_tickets(image: np.ndarray,
                        read_quantity: Callable[[np.ndarray], tuple[str, float]] | None = None) -> int | None:
     """Return zero if no blue ticket is shown, or None if its count is unreadable.
 
-    Input uses OAS's RGB image format and the game's native 1280 by 720 layout.
+    Input uses OMJ's RGB image format and the game's native 1280 by 720 layout.
     """
     if image is None or image.shape != (720, 1280, 3):
         return None

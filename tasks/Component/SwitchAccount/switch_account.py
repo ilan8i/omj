@@ -55,7 +55,7 @@ class SwitchAccount(LoginAccount, ExitGame, GameUi, SwitchAccountAssets):
 
 
 if __name__ == '__main__':
-    config = Config('oas1')
+    config = Config('omj1')
     device=Device()
     toAccount=AccountInfo(account="email0@163.com", account_alias="emailO#emailo", apple_or_android=True, character="粘贴", svr="立秋夕烛")
     sa=SwitchAccount(config,device,toAccount)

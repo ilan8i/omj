@@ -392,7 +392,7 @@ class Config(ConfigState, ConfigManual, ConfigWatcher, ConfigMenu):
 
 
 if __name__ == '__main__':
-    config = Config(config_name='oas1')
+    config = Config(config_name='omj1')
     config.notifier.push(title="0000", content="dddddddd")
 
     # print(config.get_next())

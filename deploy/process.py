@@ -19,7 +19,7 @@ class ProcessManager(DeployConfig):
     def iter_process_by_name(self, name):
         """
         Args:
-            name (str): process name, such as 'oas.exe'
+            name (str): process name, such as 'omj.exe'
 
         Yields:
             str, str, str: executable_path, process_name, process_id
@@ -34,7 +34,7 @@ class ProcessManager(DeployConfig):
             wmi = GetObject('winmgmts:')
             processes = list(wmi.InstancesOf('Win32_Process'))
 
-            # 自身和祖先进程都不能杀。启动器(oas.exe)通常就是本进程的控制台宿主,
+            # 自身和祖先进程都不能杀。启动器(omj.exe)通常就是本进程的控制台宿主,
             # 强杀它会连带关掉整个控制台, 更新进程会以退出码 1 中途结束。
             parent_of = {}
             for p in processes:
@@ -74,8 +74,8 @@ class ProcessManager(DeployConfig):
             self.execute(f'taskkill /f /pid {row[2]}', allow_failure=True, output=False)
 
     def process_kill(self):
-        logger.hr(f'Kill existing OAS', 0)
-        self.kill_by_name('oas.exe')
+        logger.hr(f'Kill existing OMJ', 0)
+        self.kill_by_name('omj.exe')
         self.kill_by_name('python.exe')
         self.kill_by_name('pythonw.exe')
 

@@ -239,7 +239,7 @@ class Benchmark(DaemonBase):
 
 
 if __name__ == '__main__':
-    config = Config('oas1')
+    config = Config('omj1')
     device = Device(config)
     b = Benchmark(config=config, device=device)
     print(b.run_simple_screenshot_benchmark())

@@ -45,7 +45,7 @@ class Buy(BaseTask, BuyAssets):
 
             if self.appear(self.I_BUY_RMB):
                 # 用人民币购买的，就取消
-                logger.warning('OAS do not support buy with RMB')
+                logger.warning('OMJ do not support buy with RMB')
                 while 1:
                     self.screenshot()
                     if not self.appear(self.I_BUY_RMB):
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     from module.config.config import Config
     from module.device.device import Device
 
-    c = Config('oas1')
+    c = Config('omj1')
     d = Device(c)
     t = Buy(c, d)
 

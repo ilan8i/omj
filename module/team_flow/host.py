@@ -160,7 +160,7 @@ class Host(Mqtt, Player):
 
 
 if __name__ == '__main__':
-    host = Host(Config('oas1'))
+    host = Host(Config('omj1'))
     sleep(20)
     # 更新config -> multi_tasks -> publish_data
     host._config_to_player()

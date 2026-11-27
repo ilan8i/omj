@@ -262,7 +262,7 @@ class Uiautomator2(Connection):
 
     def resolution_check_uiautomator2(self):
         """
-        OAS does not actively check resolution but the width and height of screenshots.
+        OMJ does not actively check resolution but the width and height of screenshots.
         However, some screenshot methods do not provide device resolution, so check it here.
 
         Returns:
@@ -328,6 +328,6 @@ class Uiautomator2(Connection):
         return resp
 
 if __name__ == '__main__':
-    ui2 = Uiautomator2(config='oas1')
+    ui2 = Uiautomator2(config='omj1')
     cv2.imshow("iiii", ui2.screenshot_uiautomator2())
     cv2.waitKey(0)

@@ -4,7 +4,7 @@
 前提：先运行 python dev_tools/cython_build.py
 输出：
     dist/private/...
-    dist/OAS-private-<version>.zip
+    dist/OMJ-private-<version>.zip
 """
 import shutil
 import subprocess
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     ensure_image_server_ready()
     ensure_ocr_server_ready()
-    Script("oas1").loop()
+    Script("omj1").loop()
 """
 
 SERVER_STUB = """# This Python file uses the following encoding: utf-8
@@ -115,7 +115,7 @@ def main() -> int:
     (OUTPUT / "server.py").write_text(SERVER_STUB, encoding="utf-8")
 
     version = datetime.now().strftime("%Y%m%d-%H%M%S")
-    zip_path = ZIP_DIR / f"OAS-private-{version}.zip"
+    zip_path = ZIP_DIR / f"OMJ-private-{version}.zip"
     zip_path.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(OUTPUT.rglob("*")):

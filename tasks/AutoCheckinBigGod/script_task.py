@@ -1216,7 +1216,7 @@ Java.perform(function() {
 if __name__ == "__main__":
     from module.config.config import Config
     from module.device.device import Device
-    config = Config('oas1')
+    config = Config('omj1')
     device = Device(config)
     t = ScriptTask(config, device)
     t.run()

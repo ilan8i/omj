@@ -330,7 +330,7 @@ class Connection(ConnectionAttr):
     @cached_property
     def reverse_server(self):
         """
-        Setup a server on OAS, access it from emulator.
+        Setup a server on OMJ, access it from emulator.
         This will bypass adb shell and be faster.
         """
         del_cached_property(self, '_nc_server_host_port')
@@ -518,7 +518,7 @@ class Connection(ConnectionAttr):
     def adb_connect(self, serial):
         """
         Connect to a serial, try 3 times at max.
-        If there's an old ADB server running while OAS is using a newer one, which happens on Chinese emulators,
+        If there's an old ADB server running while OMJ is using a newer one, which happens on Chinese emulators,
         the first connection is used to kill the other one, and the second is the real connect.
 
         Args:
@@ -795,7 +795,7 @@ class Connection(ConnectionAttr):
             logger.error(e)
             if '强迫关闭' in str(e):
                 logger.critical('无法连接至ADB服务，请关闭UU加速器、原神私服、以及一些劣质代理软件。'
-                                '它们会劫持电脑上所有的网络连接，包括OAS与模拟器之间的本地连接。')
+                                '它们会劫持电脑上所有的网络连接，包括OMJ与模拟器之间的本地连接。')
         return SelectedGrids(devices)
 
     def detect_device(self):

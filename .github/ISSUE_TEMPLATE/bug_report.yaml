@@ -1,5 +1,5 @@
 name: 🐛问题反馈
-description: 在使用 oas 过程中遇到了错误
+description: 在使用 OMJ 过程中遇到了错误
 labels: bug
 body:
   - type: checkboxes
@@ -71,7 +71,7 @@ body:
     attributes:
       label: 报错截图
       description: |
-        如果有，添加屏幕截图以帮助解释你的问题(OASX现可直接查看并下载对应报错发生时的截图)
+        如果有，添加屏幕截图以帮助解释你的问题(OMJHelper现可直接查看并下载对应报错发生时的截图)
         图片大小必须是1280*720, 若使用Mumu可直接快捷键F9截图(打开模拟器顶部菜单->更多工具->截图)
     validations:
       required: false

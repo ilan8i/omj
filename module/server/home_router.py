@@ -124,13 +124,13 @@ def _get_update_info():
 
 @home_app.get('/execute_update')
 async def execute_update():
-    # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启oasx
+    # 下拉仓库 -> 关闭所有脚本进程 -> 最后重启OMJHelper
     try:
         updater = Updater()
         updater.execute_pull()
     except Exception as e:
         logger.error(e)
-    return '手动更新将会立即结束运行中的脚本服务, 最后你还需重启oasx'
+    return '手动更新将会立即结束运行中的脚本服务, 最后你还需重启OMJHelper'
 
 
 @home_app.put('/chinese_translate')

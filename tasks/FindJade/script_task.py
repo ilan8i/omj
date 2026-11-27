@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     # SimplePatch.patch()
 
-    c = Config('oas1')
+    c = Config('omj1')
     d = Device(c)
     t = ScriptTask(c, d)
 

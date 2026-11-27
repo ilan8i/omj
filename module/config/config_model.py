@@ -89,7 +89,7 @@ from tasks.Chess.config import Chess
 # ----------------------------------------------------------------------------------------------------------------------
 
 class ConfigModel(ConfigBase):
-    config_name: str = "oas"
+    config_name: str = "omj"
     running_task: str = ''
     script: Script = Field(default_factory=Script)
     restart: Restart = Field(default_factory=Restart)
@@ -407,7 +407,7 @@ class ConfigModel(ConfigBase):
             logger.error(f'Set arg {task}.{group}.{argument}.{value} failed')
             return False
 
-        # XXX temp implementation to enable oasx control the datetime configuration globally rather than a single task
+        # XXX temp implementation to enable OMJHelper control the datetime configuration globally rather than a single task
         if task == "restart" and group == "task_config" and argument == "reset_task_datetime_enable" and value == True:
             date_time = self.restart.task_config.reset_task_datetime
             logger.info(f"reset_task_datetime={date_time}")
@@ -483,7 +483,7 @@ class ConfigModel(ConfigBase):
 
 if __name__ == "__main__":
     try:
-        c = ConfigModel("oas1")
+        c = ConfigModel("omj1")
     except ValidationError as e:
         print(e)
         c = ConfigModel()

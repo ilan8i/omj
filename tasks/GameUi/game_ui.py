@@ -14,7 +14,7 @@ if __name__ == "__main__":
     from module.device.device import Device
     from tasks.GameUi.page import page_main
 
-    c = Config("oas2")
+    c = Config("omj2")
     d = Device(c)
     game = GameUi(config=c, device=d)
     game.get_current_page()

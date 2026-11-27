@@ -45,7 +45,7 @@ def fun(ev: threading.Event):
 
     State.restart_event = ev
 
-    parser = argparse.ArgumentParser(description="OAS web service")
+    parser = argparse.ArgumentParser(description="OMJ web service")
     parser.add_argument(
         "--host",
         type=str,
@@ -58,7 +58,7 @@ def fun(ev: threading.Event):
         help="Port to listen. Default to WebuiPort in deploy setting",
     )
     parser.add_argument(
-        "-k", "--key", type=str, help="Password of OAS. No password by default"
+        "-k", "--key", type=str, help="Password of OMJ. No password by default"
     )
     parser.add_argument(
         "--cdn",
@@ -69,7 +69,7 @@ def fun(ev: threading.Event):
         "--run",
         nargs="+",
         type=str,
-        help="Run OAS by config names on startup",
+        help="Run OMJ by config names on startup",
     )
     args, _ = parser.parse_known_args()
 

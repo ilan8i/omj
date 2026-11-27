@@ -18,7 +18,7 @@
 
 3. 执行`./dev_tools/assets_extract.py`这个将会更新`./tasks/Component/Costume/assets.py` 你不需要手动修改这个文件
 
-4. 好了你现在以及输出你这个庭院皮肤的assets了，下面是为其加入 OAS 中
+4. 好了你现在以及输出你这个庭院皮肤的assets了，下面是为其加入 OMJ 中
 
 5. 打开`./tasks/Component/Costume/config.py`看到类似这种的，照着填进去
 
@@ -40,6 +40,6 @@
 
 7. 完事之后，你需要测试一下。执行`./tasks/Component/Costume/costume_test.py` 这个文件。
 
-   **在测试之前你需要打开一次 OASX 修改你对应的庭院皮肤的选项**
+   **在测试之前你需要打开一次 OMJHelper 修改你对应的庭院皮肤的选项**
 
-8. 完事啦？？？哪有那么简单，你没有发现打开 OASX 的时候发现你的选项还是 `costume_main_xxx` 这种吗。你还需要添加一个翻译，[点击这儿](https://runhey.github.io/OnmyojiAutoScript-website/docs/development/user-option#7翻译)
+8. 完事啦？？？哪有那么简单，你没有发现打开 OMJHelper 的时候发现你的选项还是 `costume_main_xxx` 这种吗。你还需要添加一个翻译，[点击这儿](https://runhey.github.io/OnmyojiAutoScript-website/docs/development/user-option#7翻译)

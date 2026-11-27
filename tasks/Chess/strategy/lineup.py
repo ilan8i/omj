@@ -5,7 +5,7 @@
 新增体系时：
 在 ``lineup_strategy.json`` 中维护阵容，由 ``lineup_loader.py`` 读取。
 
-OASX 下拉选项和主任务运行时选择均由本注册表生成。
+OMJHelper 下拉选项和主任务运行时选择均由本注册表生成。
 """
 
 from enum import Enum
@@ -17,7 +17,7 @@ LINEUP_REGISTRY = load_lineup_registry()
 
 DEFAULT_LINEUP_KEY = 'qijiaoshan'
 
-# 枚举值使用中文，使 OASX 下拉框直接显示中文；运行时通过下面的解析
+# 枚举值使用中文，使 OMJHelper 下拉框直接显示中文；运行时通过下面的解析
 # 函数还原成稳定的拼音键。
 LEGACY_LINEUP_NAMES = {'pinganjing': '平安京', 'qijiaoshan': '七角山',
                        'minghuo': '冥火'}
@@ -31,7 +31,7 @@ LineupBond = Enum(
 
 
 def resolve_lineup_key(value) -> str:
-    """将拼音键、中文显示名或 OASX 枚举值统一解析为拼音键。"""
+    """将拼音键、中文显示名或 OMJHelper 枚举值统一解析为拼音键。"""
     raw = getattr(value, 'value', value)
     raw = str(raw or '').strip()
     registry = load_lineup_registry()
@@ -47,7 +47,7 @@ def resolve_lineup_key(value) -> str:
 
 
 def oasx_lineup_choices() -> dict[str, str]:
-    """Build fresh display labels with stable source/key identities for OASX."""
+    """Build fresh display labels with stable source/key identities for OMJHelper."""
     from tasks.Chess.strategy.custom_lineups import read_lineups
     choices = {}
     for source, label, records in (

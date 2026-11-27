@@ -481,7 +481,7 @@ class ConfigManager:
     def all_script_files() -> list[str]:
         """
         获取所有的脚本文件 除了tmplate
-        :return: ['oas1', 'oas2']
+        :return: ['omj1', 'omj2']
         """
         # 获取某个路径的所有json文件名
         config_path = Path.cwd() / 'config'
@@ -493,15 +493,15 @@ class ConfigManager:
             result.append(json.stem)
         if len(result) == 0:
             # 如果没有脚本文件 则创建一个
-            ConfigManager.copy(file='oas1', template='template')
-            result.append('oas1')
+            ConfigManager.copy(file='omj1', template='template')
+            result.append('omj1')
         return result
 
     @staticmethod
     def all_json_file() -> list:
         """
         获取所有的json文件
-        :return: ['oas1', 'oas2']
+        :return: ['omj1', 'omj2']
         """
         # 获取某个路径的所有json文件名
         config_path = Path.cwd() / 'config'
@@ -544,7 +544,7 @@ class ConfigManager:
         """
         all_script_files = ConfigManager.all_script_files()
         if not all_script_files:
-            return 'oas1'
+            return 'omj1'
 
         script_numbers = []
         for script_file in all_script_files:
@@ -554,10 +554,10 @@ class ConfigManager:
                 script_numbers.append(script_number)
 
         if not script_numbers:
-            return 'oas1'
+            return 'omj1'
         script_numbers.sort()
         new_script_number = script_numbers[-1] + 1
-        return f'oas{new_script_number}'
+        return f'omj{new_script_number}'
 
     @staticmethod
     def rename(old_name: str, new_name: str) -> bool:
