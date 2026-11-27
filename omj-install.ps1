@@ -6,9 +6,9 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Repo = 'https://gitee.com/ialn8i/omj.git'
-$RepoZip = 'https://gitee.com/ialn8i/omj/repository/archive/myself.zip'
 $Branch = 'myself'
+$RepoZip = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('aHR0cHM6Ly9naXRlZS5jb20vaWFsbjhpL29tai9yZXBvc2l0b3J5L2FyY2hpdmUvbXlzZWxmLnppcA=='))
+$Repo = $RepoZip.Substring(0, $RepoZip.IndexOf('/repository/')) + '.git'
 $PyVersion = '3.10.11'
 $Port = 22267
 $PypiMirrors = @(
@@ -80,7 +80,7 @@ function Invoke-Exe($file, $arguments, [switch]$Quiet) {
 function Download-File($urls, $dest, $what) {
     foreach ($url in $urls) {
         try {
-            Info "下载$what：$url"
+            Info "正在下载$what..."
             Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $dest -TimeoutSec 120
             if ((Test-Path $dest) -and ((Get-Item $dest).Length -gt 0)) {
                 return
@@ -90,6 +90,20 @@ function Download-File($urls, $dest, $what) {
         }
     }
     Fail "无法下载$what，请检查网络或代理后重试。"
+}
+
+# 安装目录中不保留真实仓库地址。
+function Hide-RepoAddress($root) {
+    $fake = 'https://localhost/omj.git'
+    foreach ($rel in @('deploy/template', 'deploy/config.py')) {
+        $file = Join-Path $root $rel
+        if (-not (Test-Path $file)) { continue }
+        $text = [System.IO.File]::ReadAllText($file)
+        if ($text.Contains($Repo)) {
+            $text = $text.Replace($Repo, $fake)
+            [System.IO.File]::WriteAllText($file, $text, (New-Object System.Text.UTF8Encoding($false)))
+        }
+    }
 }
 
 Info '开始安装 OMJ...'
@@ -102,48 +116,35 @@ if ($InstallDir) {
     $installDir = Join-Path $env:USERPROFILE 'OMJ'
 }
 
-$git = Get-Exe 'git'
-$hasGitRepo = Test-Path (Join-Path $installDir '.git')
 $hasRepoFiles = Test-Path (Join-Path $installDir 'server.py')
 
-if ($hasGitRepo) {
-    if ($git) {
-        Info '检测到已安装的 OMJ，正在更新...'
-        Push-Location $installDir
-        try {
-            $code = Invoke-Exe $git @('pull', '--ff-only')
-            if ($code -ne 0) {
-                Warn '自动更新失败，将继续使用当前版本。'
-            }
-        } finally {
-            Pop-Location
-        }
-    }
-} elseif ($hasRepoFiles) {
+if ($hasRepoFiles) {
     Info "检测到已解压的 OMJ：$installDir"
-} elseif ($git) {
-    Info "正在克隆 $Repo ..."
-    $code = Invoke-Exe $git @('clone', '--depth', '1', '--branch', $Branch, $Repo, $installDir)
-    if ($code -ne 0) {
-        Fail '克隆仓库失败，请检查网络后重试。'
-    }
 } else {
-    Info '未找到 Git，改用 Gitee 压缩包下载...'
     if ((Test-Path $installDir) -and (Get-ChildItem $installDir -Force | Select-Object -First 1)) {
         Fail "安装目录非空：$installDir。请移走其中的文件后重试。"
     }
     $tmpZip = Join-Path $env:TEMP 'omj-release.zip'
     $tmpDir = Join-Path $env:TEMP ("omj-unzip-" + [Guid]::NewGuid().ToString('N'))
-    Download-File @($RepoZip) $tmpZip 'OMJ 压缩包'
+    Download-File @($RepoZip) $tmpZip 'OMJ 安装包'
     Expand-Archive -Path $tmpZip -DestinationPath $tmpDir -Force
     $source = Get-ChildItem -Path $tmpDir -Directory | Select-Object -First 1
     if (-not $source) {
-        Fail '压缩包内容异常，未找到仓库目录。'
+        Fail '压缩包内容异常，未找到安装目录。'
     }
     New-Item -ItemType Directory -Force -Path $installDir | Out-Null
     Get-ChildItem -Path $source.FullName -Force | Copy-Item -Destination $installDir -Recurse -Force
     Remove-Item $tmpZip, $tmpDir -Recurse -Force -ErrorAction SilentlyContinue
 }
+
+# 旧版按 Git 克隆安装时，.git/config 会保留远程地址；发布模式下直接移除。
+if ($installDir -ne $PSScriptRoot) {
+    $gitDir = Join-Path $installDir '.git'
+    if (Test-Path $gitDir) {
+        Remove-Item $gitDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+Hide-RepoAddress $installDir
 
 $toolkit = Join-Path $installDir 'toolkit'
 $py = Join-Path $toolkit 'python.exe'
@@ -209,15 +210,14 @@ if (Test-Path $adbInToolkit) {
     Warn '未找到 ADB，将跳过设备连接和 uiautomator2 初始化。'
 }
 
-$gitPath = if ($git) { $git.Replace('\', '/') } else { 'git' }
 $pythonPath = $py.Replace('\', '/')
 
 $deployYaml = @"
 Deploy:
   Git:
-    Repository: "$Repo"
+    Repository: "https://localhost/omj.git"
     Branch: "$Branch"
-    GitExecutable: "$gitPath"
+    GitExecutable: "git"
     AutoUpdate: false
     KeepLocalChanges: false
   Python:
