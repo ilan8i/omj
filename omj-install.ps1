@@ -58,6 +58,13 @@ function Invoke-Exe($file, $arguments, [switch]$Quiet) {
         if ($a -match '\s') { '"' + ($a -replace '"', '\"') + '"' } else { $a }
     }) -join ' '
 
+    # 非静默命令直接继承控制台，pip 的下载进度条可以实时显示。
+    if (-not $Quiet) {
+        $proc = Start-Process -FilePath $file -ArgumentList $argLine -NoNewWindow -Wait -PassThru -ErrorAction Stop
+        $proc.WaitForExit()
+        return $proc.ExitCode
+    }
+
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $file
     $psi.Arguments = $argLine
@@ -72,13 +79,8 @@ function Invoke-Exe($file, $arguments, [switch]$Quiet) {
     $outTask = $proc.StandardOutput.ReadToEndAsync()
     $errTask = $proc.StandardError.ReadToEndAsync()
     $proc.WaitForExit()
-    $out = $outTask.Result
-    $err = $errTask.Result
-
-    if (-not $Quiet) {
-        if ($out) { Write-Host $out.TrimEnd() }
-        if ($proc.ExitCode -ne 0 -and $err) { Write-Host $err.TrimEnd() -ForegroundColor DarkGray }
-    }
+    $null = $outTask.Result
+    $null = $errTask.Result
     return $proc.ExitCode
 }
 
