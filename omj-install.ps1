@@ -23,8 +23,7 @@ $PypiMirrors = @(
     'https://pypi.org/simple'
 )
 $PyMirrors = @(
-    "https://mirrors.huaweicloud.com/python/$PyVersion/python-$PyVersion-embed-amd64.zip",
-    "https://www.python.org/ftp/python/$PyVersion/python-$PyVersion-embed-amd64.zip"
+    "https://www.nuget.org/api/v2/package/python/$PyVersion"
 )
 $PipMirrors = @(
     'https://mirrors.aliyun.com/pypi/get-pip.py',
@@ -204,22 +203,39 @@ if (-not $isDevRepo) {
 $toolkit = Join-Path $installDir 'toolkit'
 $py = Join-Path $toolkit 'python.exe'
 
-if (-not (Test-Path $py)) {
+$runtimeMarker = Join-Path $toolkit '.omj_runtime'
+$runtimeOk = (Test-Path $py) -and (Test-Path $runtimeMarker) -and ((Get-Content $runtimeMarker -Raw -ErrorAction SilentlyContinue).Trim() -eq "nuget-$PyVersion")
+
+if (-not $runtimeOk) {
     Info "正在下载 Python $PyVersion 运行环境..."
-    $tmpPy = Join-Path $env:TEMP "python-$PyVersion-embed-amd64.zip"
+    $tmpPy = Join-Path $env:TEMP "python-$PyVersion.nupkg"
     Download-File $PyMirrors $tmpPy 'Python 运行时' -Zip
-    New-Item -ItemType Directory -Force -Path $toolkit | Out-Null
+    $extractDir = Join-Path $env:TEMP ("python-extract-" + [Guid]::NewGuid().ToString('N'))
     try {
-        Expand-Archive -Path $tmpPy -DestinationPath $toolkit -Force
+        [System.IO.Compression.ZipFile]::ExtractToDirectory($tmpPy, $extractDir)
     } catch {
         Fail 'Python 运行时解压失败，请检查网络后重试。'
     }
-    Remove-Item $tmpPy -Force -ErrorAction SilentlyContinue
-
-    $pth = Join-Path $toolkit 'python310._pth'
-    $pthContent = "python310.zip`r`n.`r`n..`r`nLib\site-packages`r`nimport site`r`n"
-    [System.IO.File]::WriteAllText($pth, $pthContent, (New-Object System.Text.UTF8Encoding($false)))
+    $tools = Join-Path $extractDir 'tools'
+    if (-not (Test-Path $tools)) {
+        Fail 'Python 安装包内容异常。'
+    }
+    if (Test-Path $toolkit) {
+        Remove-Item $toolkit -Recurse -Force -ErrorAction SilentlyContinue
+    }
+    New-Item -ItemType Directory -Force -Path $toolkit | Out-Null
+    Get-ChildItem -Path $tools -Force | Copy-Item -Destination $toolkit -Recurse -Force
+    Remove-Item $tmpPy, $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+    [System.IO.File]::WriteAllText($runtimeMarker, "nuget-$PyVersion", (New-Object System.Text.UTF8Encoding($false)))
 }
+
+$pth = Join-Path $toolkit 'python310._pth'
+if (Test-Path $pth) {
+    Remove-Item $pth -Force -ErrorAction SilentlyContinue
+}
+
+Remove-Item Env:PYTHONHOME -ErrorAction SilentlyContinue
+$env:PYTHONPATH = $installDir
 
 $pipCode = Invoke-Exe $py @('-c', 'import pip') -Quiet
 if ($pipCode -ne 0) {
@@ -231,6 +247,15 @@ if ($pipCode -ne 0) {
         Fail 'pip 安装失败。'
     }
     Remove-Item $getPip -Force -ErrorAction SilentlyContinue
+}
+
+Info '正在升级 pip...'
+foreach ($mirror in $PypiMirrors) {
+    $code = Invoke-Exe $py @('-m', 'pip', 'install', '--disable-pip-version-check', '--no-warn-script-location', '--upgrade', 'pip', 'wheel', '-i', $mirror)
+    if ($code -eq 0) {
+        break
+    }
+    Warn 'pip 升级失败，尝试下一个源...'
 }
 
 $futureWheel = Join-Path $PSScriptRoot 'vendor\future-0.18.3-py3-none-any.whl'
@@ -321,6 +346,7 @@ try {
 $startBat = @"
 @echo off
 cd /d "%~dp0"
+set "PYTHONPATH=%~dp0"
 set "PADDLE_PDX_CACHE_HOME=%~dp0models"
 set "HF_HOME=%~dp0models\huggingface"
 set "MODELSCOPE_CACHE=%~dp0models\modelscope"
