@@ -2,18 +2,25 @@
 # @author runhey
 # github https://github.com/runhey
 
+from module.atom.gif import RuleGif
 from module.atom.image import RuleImage
 from module.logger import logger
 
 from tasks.Component.Costume.config import (
     MainType,
     CostumeConfig,
+    CarpBannerType,
+    ThemeType,
     ShikigamiType,
     BattleType,
+    BattleSceneType,
     CourtyardAffairType,
 )
 from tasks.Component.Costume.assets import CostumeAssets
+from tasks.Component.CostumeTheme.theme import apply_theme
 from tasks.Component.CostumeBattle.assets import CostumeBattleAssets
+from tasks.Component.CostumeBattleScene.assets import CostumeBattleSceneAssets
+from tasks.Component.CostumeCarpBanner.assets import CostumeCarpBannerAssets
 from tasks.Component.CostumeShikigami.assets import CostumeShikigamiAssets
 from tasks.Component.CustomCourtyardAffair.assets import CustomCourtyardAffairAssets
 
@@ -35,25 +42,45 @@ main_costume_model = {
     }
     for i in range(1, 18)
 }
+# 玉岚狐庭（多帧动画）
+main_costume_model[MainType.COSTUME_MAIN_18] = {
+    'I_CHECK_MAIN': ['I_CHECK_MAIN_18_A', 'I_CHECK_MAIN_18_B', 'I_CHECK_MAIN_18_C'],
+    'I_MAIN_GOTO_EXPLORATION': ['I_MAIN_GOTO_EXPLORATION_18_A', 'I_MAIN_GOTO_EXPLORATION_18_B', 'I_MAIN_GOTO_EXPLORATION_18_C'],
+    'I_MAIN_GOTO_SUMMON': ['I_MAIN_GOTO_SUMMON_18_A', 'I_MAIN_GOTO_SUMMON_18_B', 'I_MAIN_GOTO_SUMMON_18_C'],
+    'I_MAIN_GOTO_TOWN': ['I_MAIN_GOTO_TOWN_18_A', 'I_MAIN_GOTO_TOWN_18_B', 'I_MAIN_GOTO_TOWN_18_C'],
+    'I_PET_HOUSE': ['I_PET_HOUSE_18_A', 'I_PET_HOUSE_18_B', 'I_PET_HOUSE_18_C'],
+}
 
-# 战斗主题（使用循环处理常规情况 + 特例处理）
-battle_theme_model = {}
-for i in range(1, 15):
-    entry = {
+# 鲤鱼旗皮肤
+carpbanner_costume_model = {
+    getattr(CarpBannerType, f'COSTUME_CARPBANNER_{i}'): {
+        'I_SHI_CARD': f'I_SHI_CARD_{i}',
+        'I_SHI_DEFENSE': f'I_SHI_DEFENSE_{i}',
+        'I_SHI_GROWN': f'I_SHI_GROWN_{i}',
+    }
+    for i in range(1, 4)
+}
+
+# 战斗主题
+battle_theme_model = {
+    getattr(BattleType, f'COSTUME_BATTLE_{i}'): {
         'I_LOCAL': f'I_LOCAL_{i}',
         'I_EXIT': f'I_EXIT_{i}',
         'I_FRIENDS': f'I_FRIENDS_{i}',
         'I_BATTLE_INFO': f'I_BATTLE_INFO_{i}',
+        'I_WIN': f'I_WIN_{i}',
+        'I_DE_WIN': f'I_DE_WIN_{i}',
+        'I_FALSE': f'I_FALSE_{i}',
     }
-    if i in [8, 12, 13, 14]:  # 特殊处理
-        entry.update(
-            {
-                'I_WIN': f'I_WIN_{i}',
-                'I_DE_WIN': f'I_DE_WIN_{i}',
-                'I_FALSE': f'I_FALSE_{i}',
-            }
-        )
-    battle_theme_model[getattr(BattleType, f'COSTUME_BATTLE_{i}')] = entry
+    for i in range(1, 16)
+}
+
+# 战斗场景皮肤
+battle_scene_model = {
+    BattleSceneType.COSTUME_BATTLE_SCENE_1: {
+        'I_REWARD': 'I_REWARD_1',
+    },
+}
 
 # 幕间主题
 shikigami_costume_model = {
@@ -75,7 +102,7 @@ shikigami_costume_model = {
         'I_ST_SOULS': f'I_ST_SOULS_{i}',
         'I_ST_REPLACE': f'I_ST_REPLACE_{i}',
     }
-    for i in range(1, 13)  # 目前支持 COSTUME_SHIKIGAMI_1 到 COSTUME_SHIKIGAMI_12
+    for i in range(1, 14)  # 目前支持 COSTUME_SHIKIGAMI_1 到 COSTUME_SHIKIGAMI_13
 }
 
 # 庭院事务皮肤
@@ -95,9 +122,24 @@ class CostumeBase:
         if config is None:
             config: CostumeConfig = self.config.model.global_game.costume_config
         self.check_costume_main(config.costume_main_type)
+        self.check_costume_carpbanner(config.costume_carpbanner_type)
         self.check_costume_battle(config.costume_battle_type)
+        self.check_costume_battle_scene(config.costume_battle_scene_type)
         self.check_costume_shikigami(config.costume_shikigami_type)
+        self.check_costume_theme(config.costume_theme_type)
         self.check_custom_courtyard_affair(config.custom_courtyard_affair)
+
+    def _get_current_task_name(self) -> str:
+        mod = getattr(self.__class__, '__module__', '')
+        parts = mod.split('.')
+        if len(parts) >= 2 and parts[0] == 'tasks':
+            return parts[1]
+        return getattr(getattr(self, 'config', None), 'running_task', '') or ''
+
+    def check_costume_theme(self, theme_type: ThemeType):
+        apply_theme(theme_type)
+        if theme_type != ThemeType.COSTUME_THEME_DEFAULT:
+            logger.info(f'Switch menu theme {theme_type}')
 
     def replace_img(
         self, asset_before: str, asset_after: RuleImage, rp_roi_back: bool = True
@@ -111,6 +153,7 @@ class CostumeBase:
             asset_before_object.roi_back = asset_after.roi_back
         asset_before_object.threshold = asset_after.threshold
         asset_before_object.file = asset_after.file
+        asset_before_object.method = asset_after.method
 
     def check_costume_main(self, main_type: MainType):
         if main_type == MainType.COSTUME_MAIN:
@@ -118,9 +161,28 @@ class CostumeBase:
         logger.info(f'Switch main costume to {main_type}')
         costume_assets = CostumeAssets()
         for key, value in main_costume_model[main_type].items():
-            assert_value: RuleImage = getattr(costume_assets, value, None)
-            if assert_value is None:
+            if isinstance(value, list):
+                if not hasattr(self, key):
+                    continue
+                rules: list[RuleImage] = [getattr(costume_assets, item) for item in value]
+                RuleGif.attach_to(getattr(self, key), rules)
+            else:
+                assert_value: RuleImage = getattr(costume_assets, value, None)
+                if assert_value is None:
+                    continue
+                self.replace_img(key, assert_value)
+
+    def check_costume_carpbanner(self, carpbanner_type: CarpBannerType):
+        if carpbanner_type == CarpBannerType.COSTUME_CARPBANNER_DEFAULT:
+            return
+        logger.info(f'Switch carp banner theme {carpbanner_type} (override realm assets)')
+        carpbanner_assets = CostumeCarpBannerAssets()
+        model = carpbanner_costume_model.get(carpbanner_type, {})
+        for key, value in model.items():
+            if not hasattr(carpbanner_assets, value):
+                logger.warning(f'Carp banner asset {value} not found, skip')
                 continue
+            assert_value: RuleImage = getattr(carpbanner_assets, value)
             self.replace_img(key, assert_value)
 
     def check_costume_battle(self, battle_type: BattleType):
@@ -129,12 +191,29 @@ class CostumeBase:
         logger.info(f'Switch battle theme {battle_type}')
         costume_battle_assets = CostumeBattleAssets()
         for key, value in battle_theme_model[battle_type].items():
+            if not hasattr(costume_battle_assets, value):
+                continue
             assert_value: RuleImage = getattr(costume_battle_assets, value)
             # 绿标的坐标点范围不变
             if key == 'I_LOCAL':
                 self.replace_img(key, assert_value, rp_roi_back=False)
             else:
                 self.replace_img(key, assert_value)
+
+    def check_costume_battle_scene(self, scene_type: BattleSceneType):
+        if scene_type == BattleSceneType.COSTUME_BATTLE_SCENE_DEFAULT:
+            return
+        logger.info(f'Switch battle scene skin {scene_type}')
+        current_task = self._get_current_task_name()
+        allowed_tasks = {'Orochi'}
+        if current_task not in allowed_tasks:
+            return
+        costume_assets = CostumeBattleSceneAssets()
+        for key, value in battle_scene_model.get(scene_type, {}).items():
+            if not hasattr(costume_assets, value):
+                continue
+            assert_value: RuleImage = getattr(costume_assets, value)
+            self.replace_img(key, assert_value)
 
     def check_costume_shikigami(self, shikigami_type: ShikigamiType):
         if shikigami_type == ShikigamiType.COSTUME_SHIKIGAMI_DEFAULT:

@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 # @author runhey
 # github https://github.com/runhey
+import types
 import numpy as np
 
 from module.atom.image import RuleImage
@@ -10,6 +11,23 @@ from module.image.rpc import get_image_client
 
 class RuleGif:
     # 大部分实现同RuleImage 的接口
+
+    @staticmethod
+    def attach_to(image_obj: RuleImage, targets: list[RuleImage]) -> None:
+        """
+        把GIF的多帧匹配行为原地挂载到一个RuleImage实例上，保持Page/寻路引用有效。
+        """
+        image_obj.targets = targets
+        image_obj.roi_front = [0, 0, 0, 0]
+        image_obj.roi_back = targets[0].roi_back
+        image_obj.appear_target = targets[0]
+        image_obj.name = targets[0].name
+        image_obj._match_init = False
+        for name, attr in RuleGif.__dict__.items():
+            if name.startswith('_'):
+                continue
+            if isinstance(attr, types.FunctionType):
+                setattr(image_obj, name, types.MethodType(attr, image_obj))
 
     @property
     def name(self) -> str:

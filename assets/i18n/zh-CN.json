@@ -370,5 +370,19 @@
   "license_permissions": "任务权限",
   "license_permission_denied": "当前授权未开通该任务权限",
   "license_permission_switch_account": "切换账号",
-  "license_permission_assist_battle": "一键协战"
+  "license_permission_assist_battle": "一键协战",
+  "costume_main_18": "玉岚狐庭",
+  "costume_battle_15": "灵狐寄愿",
+  "costume_shikigami_13": "梦隙闲花",
+  "costume_theme_xinyu_mingxiao": "新语明霄",
+  "costume_carpbanner_type": "鲤鱼旗皮肤",
+  "costume_carpbanner_type_help": "多数结界通用",
+  "costume_carpbanner_default": "吉鲤游风",
+  "costume_carpbanner_1": "无垢莲台",
+  "costume_carpbanner_2": "萤灯月夜",
+  "costume_carpbanner_3": "鸢戏游鲤",
+  "costume_battle_scene_type": "战斗场景",
+  "costume_battle_scene_type_help": "",
+  "costume_battle_scene_default": "默认",
+  "costume_battle_scene_1": "鎏金圣域"
 }

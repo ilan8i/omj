@@ -25,6 +25,7 @@ class MainType(str, Enum):
     COSTUME_MAIN_15 = 'costume_main_15'  # 茨心乐园
     COSTUME_MAIN_16 = 'costume_main_16'  # 琦梦茨庭
     COSTUME_MAIN_17 = 'costume_main_17'  # 狐栖归处
+    COSTUME_MAIN_18 = 'costume_main_18'  # 玉岚狐庭
 
 
 # 结界皮肤
@@ -32,9 +33,18 @@ class RealmType(str, Enum):
     COSTUME_REALM_DEFAULT = 'costume_realm_default'  # 妖扇结界
 
 
+# 鲤鱼旗皮肤
+class CarpBannerType(str, Enum):
+    COSTUME_CARPBANNER_DEFAULT = 'costume_carpbanner_default'  # 吉鲤游风
+    COSTUME_CARPBANNER_1 = 'costume_carpbanner_1'  # 无垢莲台
+    COSTUME_CARPBANNER_2 = 'costume_carpbanner_2'  # 萤灯月夜
+    COSTUME_CARPBANNER_3 = 'costume_carpbanner_3'  # 鸢戏游鲤
+
+
 # 主题，就是庭院最右下角的展开按钮
 class ThemeType(str, Enum):
     COSTUME_THEME_DEFAULT = 'costume_theme_default'  # 伊始之卷
+    COSTUME_THEME_XINYU_MINGXIAO = 'costume_theme_xinyu_mingxiao'  # 新语明霄
 
 
 # 幕间，就是式神录这里
@@ -52,6 +62,7 @@ class ShikigamiType(str, Enum):
     COSTUME_SHIKIGAMI_10 = 'costume_shikigami_10'  # 今宵胧明
     COSTUME_SHIKIGAMI_11 = 'costume_shikigami_11'  # 花札幕台
     COSTUME_SHIKIGAMI_12 = 'costume_shikigami_12'  # 拾光之窗
+    COSTUME_SHIKIGAMI_13 = 'costume_shikigami_13'  # 梦隙闲花
 
 
 # 签到主题
@@ -76,6 +87,13 @@ class BattleType(str, Enum):
     COSTUME_BATTLE_12 = 'costume_battle_12'  # 招财纳福
     COSTUME_BATTLE_13 = 'costume_battle_13'  # 登云问翠
     COSTUME_BATTLE_14 = 'costume_battle_14'  # 茸茨跃动
+    COSTUME_BATTLE_15 = 'costume_battle_15'  # 灵狐寄愿
+
+
+# 战斗场景
+class BattleSceneType(str, Enum):
+    COSTUME_BATTLE_SCENE_DEFAULT = 'costume_battle_scene_default'  # 默认
+    COSTUME_BATTLE_SCENE_1 = 'costume_battle_scene_1'  # 鎏金圣域
 
 
 # 庭院事务主题
@@ -92,6 +110,10 @@ class CostumeConfig(BaseModel):
     costume_realm_type: RealmType = Field(
         default=RealmType.COSTUME_REALM_DEFAULT, description='costume_realm_type_help'
     )
+    costume_carpbanner_type: CarpBannerType = Field(
+        default=CarpBannerType.COSTUME_CARPBANNER_DEFAULT,
+        description='costume_carpbanner_type_help',
+    )
     costume_theme_type: ThemeType = Field(
         default=ThemeType.COSTUME_THEME_DEFAULT, description='costume_theme_type_help'
     )
@@ -105,6 +127,10 @@ class CostumeConfig(BaseModel):
     costume_battle_type: BattleType = Field(
         default=BattleType.COSTUME_BATTLE_DEFAULT,
         description='costume_battle_type_help',
+    )
+    costume_battle_scene_type: BattleSceneType = Field(
+        default=BattleSceneType.COSTUME_BATTLE_SCENE_DEFAULT,
+        description='costume_battle_scene_type_help',
     )
     custom_courtyard_affair: CourtyardAffairType = Field(
         default=CourtyardAffairType.CUSTOM_COURTYARD_AFFAIR_DEFAULT
