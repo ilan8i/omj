@@ -132,7 +132,7 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
                     False       挑战失败
         @rtype:
         """
-        reward_floor = self.config.area_boss.boss.reward_floor
+        boss_floor = self.config.area_boss.boss.reward_floor
         if fileter_open and not self.appear(self.I_AB_FILTER_OPENED):
             self.open_filter()
         # 如果打不开鬼王详情界面,直接退出
@@ -161,11 +161,14 @@ class ScriptTask(GeneralBattle, GameUi, SwitchSoul, AreaBossAssets):
                     self.ui_click_until_disappear(self.I_AB_CLOSE_RED, interval=3)
                     return False
 
-            # 调整悬赏层数
-            match reward_floor:
+        # 所有鬼王都按配置调整星级；只有极地鬼才有壹星~拾星的选择，普通地鬼没有星级
+        if self.get_difficulty():
+            match boss_floor:
                 case AreaBossFloor.ONE: self.switch_to_floor_1()
                 case AreaBossFloor.TEN: self.switch_to_floor_10()
                 case AreaBossFloor.DEFAULT: logger.info("Not change floor")
+        else:
+            logger.info("Current boss is normal, skip floor switch")
         result = True
         if not self.start_fight():
             result = False

@@ -18,8 +18,11 @@ class Boss(BaseModel):
                              ge=1, le=3)
     # 是否查找当日悬赏鬼王
     boss_reward: bool = Field(default=False, description='boss_reward_help')
-    # 悬赏默认打较简单的一星鬼王，若想要更高悬赏奖励可自行更改为十星或不更改（保留已勾选DEBUFF）
-    reward_floor: AreaBossFloor = Field(default=AreaBossFloor.ONE, description='reward_floor_help')
+    # 所有鬼王的星级：仅极地鬼有壹星~拾星的选择，普通地鬼没有星级
+    # 默认打较简单的一星，若想要更高奖励可自行更改为十星或不更改（保留已勾选DEBUFF）
+    reward_floor: AreaBossFloor = Field(title='鬼王星级',
+                                        default=AreaBossFloor.ONE,
+                                        description='所有鬼王的星级，仅极地鬼生效；普通地鬼没有星级选择')
     # 是否使用收藏的
     use_collect: bool = Field(default=False, description='use_collect_help')
 
