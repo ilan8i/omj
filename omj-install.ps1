@@ -42,8 +42,25 @@ function Warn($message) {
     Write-Host "[OMJ] $message" -ForegroundColor Yellow
 }
 
+# 安装结束（成功或失败）后删除下载缓存，避免残留数百 MB 文件。
+function Clear-DownloadCache {
+    if ([string]::IsNullOrEmpty($script:downloadDir)) { return }
+    if (-not [string]::IsNullOrEmpty($script:origTemp)) { $env:TEMP = $script:origTemp }
+    if (-not [string]::IsNullOrEmpty($script:origTmp)) { $env:TMP = $script:origTmp }
+    Remove-Item Env:PIP_CACHE_DIR -ErrorAction SilentlyContinue
+    # pip 退出后文件句柄可能延迟释放，重试几次再放弃。
+    for ($i = 0; $i -lt 5; $i++) {
+        if (-not (Test-Path -LiteralPath $script:downloadDir)) { return }
+        Remove-Item -LiteralPath $script:downloadDir -Recurse -Force -ErrorAction SilentlyContinue
+        if (-not (Test-Path -LiteralPath $script:downloadDir)) { return }
+        Start-Sleep -Milliseconds 400
+    }
+    Warn "缓存目录未能完全删除，可手动删除：$script:downloadDir"
+}
+
 function Fail($message) {
     Write-Host "[错误] $message" -ForegroundColor Red
+    Clear-DownloadCache
     exit 1
 }
 
@@ -176,6 +193,13 @@ $env:TEMP = Join-Path $downloadDir 'tmp'
 $env:TMP = $env:TEMP
 $env:PIP_CACHE_DIR = Join-Path $downloadDir 'pip-cache'
 New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
+
+# 未预期异常也要清理缓存。
+trap {
+    Clear-DownloadCache
+    Write-Host "[错误] $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
+}
 
 if ($hasRepoFiles) {
     Info "检测到已解压的 OMJ：$installDir"
@@ -358,6 +382,10 @@ if (Test-Path $adbInToolkit) {
 
 $pythonPath = $py.Replace('\', '/')
 
+# 开发仓库中保留本地改动：否则 deploy.installer 的自动更新会 reset --hard，
+# 把安装器自身未提交的修改一并丢弃。
+$keepLocalChanges = if ($isDevRepo) { 'true' } else { 'false' }
+
 $deployYaml = @"
 Deploy:
   Git:
@@ -365,7 +393,7 @@ Deploy:
     Branch: $Branch
     GitExecutable: ./toolkit/Git/mingw64/bin/git.exe
     AutoUpdate: true
-    KeepLocalChanges: false
+    KeepLocalChanges: $keepLocalChanges
   Python:
     PythonExecutable: $pythonPath
     PypiMirror: $usedMirror
@@ -409,10 +437,7 @@ pause
 "@
 [System.IO.File]::WriteAllText((Join-Path $installDir 'start-omj.bat'), $startBat, $utf8NoBom)
 
-$env:TEMP = $origTemp
-$env:TMP = $origTmp
-Remove-Item Env:PIP_CACHE_DIR -ErrorAction SilentlyContinue
-Remove-Item $downloadDir -Recurse -Force -ErrorAction SilentlyContinue
+Clear-DownloadCache
 
 $modelsDir = Join-Path $installDir 'models'
 $env:PADDLE_PDX_CACHE_HOME = $modelsDir

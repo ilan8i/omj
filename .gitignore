@@ -16,6 +16,7 @@ dev_tools/debug_tools
 /screenshots
 /campaign/test/
 /toolkit
+.download/
 *.lock
 config/reloadflag
 config/reloadoas
